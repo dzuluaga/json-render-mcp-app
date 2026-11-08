@@ -1,0 +1,66 @@
+{
+  "root": "card",
+  "state": { "form": { "text": "https://json-render.dev", "color": "#4f46e5" } },
+  "elements": {
+    "card": {
+      "type": "Card",
+      "props": { "title": "QR code maker", "subtitle": "The button calls the make_qr_code MCP tool directly" },
+      "children": ["text", "color", "generate", "working", "error", "result"]
+    },
+    "text": {
+      "type": "TextField",
+      "props": { "label": "Text or URL", "value": { "$bindState": "/form/text" }, "placeholder": "https://…" }
+    },
+    "color": {
+      "type": "Select",
+      "props": {
+        "label": "Colour",
+        "value": { "$bindState": "/form/color" },
+        "options": [
+          { "value": "#000000", "label": "Black" },
+          { "value": "#4f46e5", "label": "Indigo" },
+          { "value": "#0f766e", "label": "Teal" },
+          { "value": "#be123c", "label": "Rose" }
+        ]
+      }
+    },
+    "generate": {
+      "type": "Button",
+      "props": { "label": "Generate" },
+      "on": {
+        "press": {
+          "action": "callTool",
+          "params": {
+            "name": "make_qr_code",
+            "arguments": { "text": { "$state": "/form/text" }, "color": { "$state": "/form/color" } },
+            "resultPath": "/qr"
+          }
+        }
+      }
+    },
+    "working": {
+      "type": "Text",
+      "props": { "text": "Generating…", "tone": "muted" },
+      "visible": { "$state": "/calls/make_qr_code/status", "eq": "pending" }
+    },
+    "error": {
+      "type": "Text",
+      "props": { "text": { "$template": "Couldn't generate: ${/calls/make_qr_code/error}" }, "tone": "danger" },
+      "visible": { "$state": "/calls/make_qr_code/status", "eq": "error" }
+    },
+    "result": {
+      "type": "Stack",
+      "props": { "gap": "sm" },
+      "children": ["qr", "caption"],
+      "visible": { "$state": "/qr" }
+    },
+    "qr": {
+      "type": "Image",
+      "props": { "src": { "$state": "/qr/src" }, "alt": "QR code", "maxWidth": 220 }
+    },
+    "caption": {
+      "type": "Text",
+      "props": { "text": { "$template": "Encodes: ${/qr/text}" }, "tone": "muted" }
+    }
+  }
+}

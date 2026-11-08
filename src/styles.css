@@ -139,3 +139,5 @@ h3.heading { font-size: 15px; }
 .legend li { display: flex; align-items: center; gap: 6px; }
 .swatch { width: 10px; height: 10px; border-radius: 2px; flex: none; }
 .legend-value { color: var(--fg-muted); margin-left: 4px; font-variant-numeric: tabular-nums; }
+
+.image { display: block; max-width: 100%; height: auto; border-radius: var(--radius); align-self: flex-start; }

@@ -70,6 +70,15 @@ export const catalog = defineCatalog(schema, {
       description:
         "An inline drawing: a complete <svg>…</svg> with a viewBox. Use it for illustrations, icons, diagrams and maps. No scripts, event handlers, <foreignObject> or external links/images (they're stripped). Use currentColor to follow the host theme.",
     },
+    Image: {
+      props: z.object({
+        src: z.string(),
+        alt: z.string(),
+        maxWidth: z.number().nullable(),
+      }),
+      description:
+        'A raster image from a data: URL (data:image/png|jpeg|gif|webp;base64,...), usually a tool result, e.g. src: { "$state": "/qr/src" }. External URLs are not allowed.',
+    },
     TextField: {
       props: z.object({
         label: z.string(),

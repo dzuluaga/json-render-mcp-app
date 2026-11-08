@@ -23,15 +23,18 @@ Claude ──render_ui({ spec })──▶ MCP server ──validated spec──�
 | `submit` action | Calls the app-only `submit_form` tool directly, with no chat turn, then tells Claude through `ui/update-model-context`. It writes its progress into UI state (`/submitting`, then `/submission = { id, receivedAt }` or `/submissionError`), so the spec can show a confirmation with `visible` conditions. |
 | `callTool` action | Calls any tool on this server (`{ name, arguments, resultPath }`). Progress goes to `/calls/<name>/status`, the result to `resultPath` (default `/result`), and a tool that returns `{ spec }` replaces the UI. Nothing is typed into the chat. |
 | `setState` / `pushState` | json-render's built-in actions, used to move between screens inside one spec. |
-| `list_submissions` | Lets Claude read back what the user saved. |
+| `list_submissions` | Lets Claude, or a button, read back what the user saved. |
+| `make_qr_code` | Demo tool that returns an image: a QR code PNG as MCP image content plus `{ src }` for an Image. `examples/qr-form.json` wires it to a Generate button. |
 
 ![Confirmation card after Save](docs/submit-confirmation.png)
 
-The catalog (`src/catalog.ts`) currently has Stack, Card, Heading, Text, Badge, Table, Chart, Svg, TextField, Select and Button.
+The catalog (`src/catalog.ts`) currently has Stack, Card, Heading, Text, Badge, Table, Chart, Svg, Image, TextField, Select and Button.
 
 - **Table:** columns plus rows, which can come from state (for example a `callTool` result).
 - **Chart:** bar, line or pie from `{ label, value }` points, drawn as plain SVG with no chart library.
 - **Svg:** Claude's own drawings (illustrations, icons, diagrams). The server rejects markup with scripts, event handlers, `foreignObject` or external references, and the UI also runs it through DOMPurify. That second layer matters because partial input streams in before the server validates it.
+
+- **Image:** a raster image from a `data:image/...;base64` URL, usually a tool result. External URLs are rejected.
 
 ![Dashboard example](docs/dashboard.png) Inputs bind to state with `{ "$bindState": "/form/name" }`, action params read state with `{ "$state": "/form" }`, and elements can show or hide with `visible` conditions.
 
@@ -44,7 +47,9 @@ The server also publishes two MCP prompts. In Claude Desktop, pick them from the
 | `ui` | `request`: anything | Claude answers that request with `render_ui` rather than prose, with buttons for the next steps. |
 | `no-textbox` | `topic` (optional) | Claude draws a whole branching flow in one spec. Buttons move between screens with `setState` and add to a breadcrumb with `pushState`, and endings get a Save button. Nothing is typed into the chat. |
 
-`examples/no-textbox.json` shows the first screen. To preview examples in the test host, open `dev/host.html?example=no-textbox` or `?example=dashboard`.
+`examples/no-textbox.json` shows the first screen. To preview examples in the test host, open `dev/host.html?example=no-textbox` or `?example=dashboard` or `?example=qr-form`.
+
+![QR form example](docs/qr-form.png)
 
 ## Run it
 

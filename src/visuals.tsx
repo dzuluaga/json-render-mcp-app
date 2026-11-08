@@ -1,4 +1,5 @@
 import DOMPurify from "dompurify";
+import { DATA_IMAGE_URL } from "./spec-schema.js";
 
 type Cell = string | number | boolean | null;
 
@@ -184,4 +185,12 @@ export function Svg({ svg, title, maxWidth }: { svg: string; title?: string | nu
       {title && <figcaption>{title}</figcaption>}
     </figure>
   );
+}
+
+/** Shows embedded images only; anything that isn't a data:image URL renders as a placeholder. */
+export function Image({ src, alt, maxWidth }: { src: string; alt: string; maxWidth?: number | null }) {
+  if (typeof src !== "string" || !DATA_IMAGE_URL.test(src)) {
+    return <p className="text tone-muted">[image unavailable]</p>;
+  }
+  return <img className="image" src={src} alt={alt} style={maxWidth ? { maxWidth } : undefined} />;
 }

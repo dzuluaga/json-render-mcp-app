@@ -83,6 +83,7 @@ describe("json-render MCP app server", () => {
       { root: "a", elements: { a: { type: "Chart", props: { kind: "radar", data: [] } } } },
       { root: "a", elements: { a: { type: "Svg", props: { svg: "<svg><script>alert(1)</script></svg>" } } } },
       { root: "a", elements: { a: { type: "Svg", props: { svg: '<svg><image href="https://evil.example/x.png"/></svg>' } } } },
+      { root: "a", elements: { a: { type: "Image", props: { src: "https://evil.example/x.png", alt: "x" } } } },
     ];
     for (const spec of bad) {
       const result = await client.callTool({ name: "render_ui", arguments: { spec } });
@@ -112,6 +113,17 @@ describe("json-render MCP app server", () => {
     const adventureText = (adventure.messages[0].content as { text: string }).text;
     expect(adventureText).toContain("about a weekend in Lisbon");
     expect(uiText + adventureText).not.toMatch(/"ask"/);
+  });
+
+  it("make_qr_code returns a PNG as image content and a data URL for the UI", async () => {
+    const client = await connect();
+    const result = await client.callTool({ name: "make_qr_code", arguments: { text: "hello", color: "#4f46e5" } });
+    expect(result.isError).toBeFalsy();
+    const { src } = result.structuredContent as { src: string };
+    expect(src).toMatch(/^data:image\/png;base64,/);
+    expect(result.content).toEqual(expect.arrayContaining([expect.objectContaining({ type: "image", mimeType: "image/png" })]));
+    const bad = await client.callTool({ name: "make_qr_code", arguments: { text: "x", color: "red" } });
+    expect(bad.isError).toBe(true);
   });
 
   it("stores submissions from the UI and lists them for the model", async () => {

@@ -7,6 +7,7 @@ import { McpServer, type CallToolResult } from "@modelcontextprotocol/server";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import QRCode from "qrcode";
 import { z } from "zod";
 import { describeCatalog, normalizeSpec, UISpec } from "./src/spec-schema.js";
 
@@ -59,7 +60,7 @@ Shows the user an interactive UI, described as a json-render spec: a flat map of
 
 ${describeCatalog()}
 
-Bind inputs to state with { "$bindState": "/path" } and read state with { "$state": "/path" }; seed it with spec.state. Build strings with { "$template": "Hi \${/form/name}" }. To list items, give a Stack repeat: { "statePath": "/items" } and read each item in its children with { "$item": "field" }. Buttons never type into the chat. Use "submit" for data the server should keep, "callTool" to run a tool on this server (list_submissions returns { submissions, count }), and setState / pushState for navigation inside the UI (show screens with visible: { "$state": "/step", "eq": "..." }). Calling render_ui again replaces the UI.`,
+Bind inputs to state with { "$bindState": "/path" } and read state with { "$state": "/path" }; seed it with spec.state. Build strings with { "$template": "Hi \${/form/name}" }. To list items, give a Stack repeat: { "statePath": "/items" } and read each item in its children with { "$item": "field" }. Buttons never type into the chat. Use "submit" for data the server should keep, "callTool" to run a tool on this server (list_submissions returns { submissions, count }; make_qr_code { text, color?: "#rrggbb", size? } returns { src } for an Image), and setState / pushState for navigation inside the UI (show screens with visible: { "$state": "/step", "eq": "..." }). Calling render_ui again replaces the UI.`,
       inputSchema: z.object({ spec: UISpec }),
       _meta: { ui: { resourceUri: RESOURCE_URI } },
     },
@@ -88,6 +89,40 @@ Bind inputs to state with { "$bindState": "/path" } and read state with { "$stat
       return {
         content: [{ type: "text", text: `Saved submission #${submission.id}.` }],
         structuredContent: { ...submission },
+      };
+    },
+  );
+
+  registerAppTool(
+    server,
+    "make_qr_code",
+    {
+      title: "Make QR code",
+      description:
+        "Generates a QR code PNG for some text or a URL. Returns { src } with a data: URL (show it with an Image component) plus the image itself.",
+      inputSchema: z.object({
+        text: z.string().min(1).max(1000),
+        color: z
+          .string()
+          .regex(/^#[0-9a-fA-F]{6}$/)
+          .optional()
+          .describe("Foreground colour as #rrggbb (default black)"),
+        size: z.number().int().min(128).max(512).optional().describe("Width in pixels (default 256)"),
+      }),
+      _meta: { ui: { resourceUri: RESOURCE_URI } },
+    },
+    async ({ text, color, size }): Promise<CallToolResult> => {
+      const src = await QRCode.toDataURL(text, {
+        width: size ?? 256,
+        margin: 2,
+        color: { dark: color ?? "#000000", light: "#ffffff" },
+      });
+      return {
+        content: [
+          { type: "image", data: src.slice(src.indexOf(",") + 1), mimeType: "image/png" },
+          { type: "text", text: `QR code for: ${text}` },
+        ],
+        structuredContent: { src, text },
       };
     },
   );

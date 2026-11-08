@@ -64,6 +64,13 @@ export const UISpec = z
       ctx.addIssue({ code: "custom", path: ["root"], message: `root "${spec.root}" is not in elements` });
     }
     for (const [key, el] of Object.entries(spec.elements)) {
+      if (el.type === "Image" && typeof el.props.src === "string" && !DATA_IMAGE_URL.test(el.props.src)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["elements", key, "props", "src"],
+          message: "Image src must be a data:image/(png|jpeg|gif|webp);base64 URL or a $state expression",
+        });
+      }
       if (el.type !== "Svg" || typeof el.props.svg !== "string") continue;
       const reason = unsafeSvgReason(el.props.svg);
       if (reason) ctx.addIssue({ code: "custom", path: ["elements", key, "props", "svg"], message: reason });
@@ -80,6 +87,8 @@ export type UISpec = z.infer<typeof UISpec>;
 
 // The UI sanitizes Svg markup anyway; rejecting it here tells Claude to redraw cleanly.
 const UNSAFE_SVG = /<script|<foreignObject|\son[a-z]+\s*=|javascript:|(?:href|src)\s*=\s*["']\s*(?!#)[a-z][a-z0-9+.-]*:|url\(\s*["']?\s*(?!#)[a-z][a-z0-9+.-]*:/i;
+
+export const DATA_IMAGE_URL = /^data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/=\s]+$/;
 
 export function unsafeSvgReason(svg: string): string | null {
   const match = svg.match(UNSAFE_SVG);

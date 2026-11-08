@@ -9,6 +9,14 @@ import "./styles.css";
 
 type Status = { kind: "info" | "error"; text: string } | null;
 
+/** Keeps embedded images out of Claude's context: they're thousands of characters of base64. */
+function elideDataUrls(_key: string, value: unknown) {
+  if (typeof value === "string" && value.startsWith("data:") && value.length > 200) {
+    return `[${value.slice(5, value.indexOf(";"))}, ${value.length.toLocaleString()} chars]`;
+  }
+  return value;
+}
+
 /**
  * Make a possibly partial spec (streamed tool input) safe to render:
  * leaf elements get `children: []` and references to elements that haven't
@@ -144,7 +152,7 @@ function JsonRenderView() {
           content: [
             {
               type: "text",
-              text: `From the UI, the user called ${name}(${JSON.stringify(args)}) and got: ${JSON.stringify(structured ?? text)}`,
+              text: `From the UI, the user called ${name}(${JSON.stringify(args)}) and got: ${JSON.stringify(structured ?? text, elideDataUrls)}`,
             },
           ],
         });

@@ -1,7 +1,7 @@
 import { defineRegistry, useBoundProp } from "@json-render/react";
 import { immutableSetByPath } from "@json-render/core/store-utils";
 import { catalog } from "./catalog.js";
-import { Chart, Svg, Table } from "./visuals.js";
+import { Chart, Image, Svg, Table } from "./visuals.js";
 
 /** Writes a value at a JSON Pointer path in the rendered UI's state. */
 export type SetStateAt = (path: string, value: unknown) => void;
@@ -42,6 +42,7 @@ export function createRegistry(actions: AppActions) {
       Table: ({ props }) => <Table {...props} />,
       Chart: ({ props }) => <Chart {...props} />,
       Svg: ({ props }) => <Svg {...props} />,
+      Image: ({ props }) => <Image {...props} />,
       TextField: ({ props, bindings }) => {
         const [value, setValue] = useBoundProp<string>(props.value ?? undefined, bindings?.value);
         return (
