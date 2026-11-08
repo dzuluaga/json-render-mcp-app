@@ -75,7 +75,7 @@ export const catalog = defineCatalog(schema, {
         form: z.record(z.string(), z.unknown()).nullable(),
       }),
       description:
-        'Saves data on the MCP server without starting a new chat turn. Pass the form state, e.g. params: { "form": { "$state": "/form" } }. Claude is told about it through model context.',
+        'Saves data on the MCP server without starting a new chat turn. Pass the form state, e.g. params: { "form": { "$state": "/form" } }. While saving, state /submitting is true; on success /submission is { id, receivedAt }; on failure /submissionError is the message. Design for it: show a confirmation with visible: { "$state": "/submission" } and hide the form with visible: { "$state": "/submission", "not": true }. Claude is told about the submission through model context.',
     },
     ask: {
       params: z.object({

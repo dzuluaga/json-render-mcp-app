@@ -1,8 +1,10 @@
 import { useApp, useHostStyles, type App } from "@modelcontextprotocol/ext-apps/react";
-import { JSONUIProvider, Renderer, type Spec } from "@json-render/react";
+import { ActionProvider, JSONUIProvider, Renderer, useStateStore, type Spec } from "@json-render/react";
 import { Component, StrictMode, useMemo, useRef, useState, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { createRegistry, type AppActions } from "./registry.js";
+
+type Registry = ReturnType<typeof createRegistry>["registry"];
 import "./styles.css";
 
 type Status = { kind: "info" | "error"; text: string } | null;
@@ -82,15 +84,26 @@ function JsonRenderView() {
   const actions = useMemo<AppActions>(
     () => ({
       // Direct server call: no new chat turn. Claude hears about it via model context.
-      submit: async (params) => {
+      // Results land in UI state so the spec can react (confirmation card, hidden form).
+      submit: async (params, setStateAt) => {
         if (!app) return;
         const form = params?.form ?? {};
-        const result = await app.callServerTool({ name: "submit_form", arguments: { form } });
+        setStateAt("/submissionError", null);
+        setStateAt("/submitting", true);
+        let result;
+        try {
+          result = await app.callServerTool({ name: "submit_form", arguments: { form } });
+        } finally {
+          setStateAt("/submitting", false);
+        }
         if (result.isError) {
-          setStatus({ kind: "error", text: "Saving failed." });
+          const text = result.content?.find((c) => c.type === "text")?.text ?? "Saving failed.";
+          setStateAt("/submissionError", text);
+          setStatus({ kind: "error", text });
           return;
         }
-        const id = (result.structuredContent as { id?: number } | undefined)?.id;
+        const { id, receivedAt } = (result.structuredContent ?? {}) as { id?: number; receivedAt?: string };
+        setStateAt("/submission", { id, receivedAt });
         setStatus({ kind: "info", text: `Saved (submission #${id}).` });
         await app.updateModelContext({
           content: [{ type: "text", text: `The user submitted submission #${id} from the UI: ${JSON.stringify(form)}` }],
@@ -118,19 +131,27 @@ function JsonRenderView() {
   return (
     <main>
       <RenderBoundary key={renderId}>
-        <JSONUIProvider
-          registry={registry}
-          initialState={spec.state ?? {}}
-          handlers={{
-            submit: (p) => actions.submit(p as Parameters<AppActions["submit"]>[0]),
-            ask: (p) => actions.ask(p as Parameters<AppActions["ask"]>[0]),
-          }}
-        >
-          <Renderer spec={spec} registry={registry} loading={streaming} />
+        <JSONUIProvider registry={registry} initialState={spec.state ?? {}}>
+          <SpecView spec={spec} registry={registry} actions={actions} loading={streaming} />
         </JSONUIProvider>
       </RenderBoundary>
       {status && <p className={`status ${status.kind}`}>{status.text}</p>}
     </main>
+  );
+}
+
+/** Renders the spec with action handlers that can write to the spec's state. */
+function SpecView({ spec, registry, actions, loading }: { spec: Spec; registry: Registry; actions: AppActions; loading: boolean }) {
+  const { set } = useStateStore();
+  return (
+    <ActionProvider
+      handlers={{
+        submit: (p) => actions.submit(p as Parameters<AppActions["submit"]>[0], set),
+        ask: (p) => actions.ask(p as Parameters<AppActions["ask"]>[0]),
+      }}
+    >
+      <Renderer spec={spec} registry={registry} loading={loading} />
+    </ActionProvider>
   );
 }
 

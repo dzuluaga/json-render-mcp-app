@@ -1,11 +1,17 @@
 {
-  "root": "card",
+  "root": "page",
   "state": { "form": { "name": "", "plan": "" } },
   "elements": {
+    "page": {
+      "type": "Stack",
+      "props": {},
+      "children": ["card", "done"]
+    },
     "card": {
       "type": "Card",
       "props": { "title": "Start your trial", "subtitle": "Rendered by json-render inside an MCP App" },
-      "children": ["name", "plan", "badge", "actions"]
+      "children": ["name", "plan", "badge", "actions", "saving", "error"],
+      "visible": { "$state": "/submission", "not": true }
     },
     "name": {
       "type": "TextField",
@@ -47,6 +53,31 @@
           "params": { "message": "Which plan should I pick? Here is what I entered:", "data": { "$state": "/form" } }
         }
       }
+    },
+    "saving": {
+      "type": "Text",
+      "props": { "text": "Saving…", "tone": "muted" },
+      "visible": { "$state": "/submitting" }
+    },
+    "error": {
+      "type": "Text",
+      "props": { "text": { "$template": "Couldn't save: ${/submissionError}" }, "tone": "danger" },
+      "visible": { "$state": "/submissionError" }
+    },
+    "done": {
+      "type": "Card",
+      "props": { "title": "You're all set", "subtitle": { "$template": "Saved as submission #${/submission/id}" } },
+      "children": ["summary", "edit"],
+      "visible": { "$state": "/submission" }
+    },
+    "summary": {
+      "type": "Text",
+      "props": { "text": { "$template": "${/form/name} is on the ${/form/plan} plan." } }
+    },
+    "edit": {
+      "type": "Button",
+      "props": { "label": "Edit", "variant": "secondary" },
+      "on": { "press": { "action": "setState", "params": { "statePath": "/submission", "value": null } } }
     }
   }
 }

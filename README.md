@@ -20,9 +20,11 @@ Claude ──render_ui({ spec })──▶ MCP server ──validated spec──�
 | --- | --- |
 | `render_ui` | Tool the model sees. Its input schema comes from the catalog: one variant per component with typed props, plus `on` bindings limited to catalog actions. Invalid specs (unknown component, unknown action, dangling child) return an error so Claude can fix and retry. |
 | UI resource | One-file React bundle with `@json-render/react`. It renders partial tool input as Claude streams it, then the validated result. |
-| `submit` action | Calls the app-only `submit_form` tool directly, with no chat turn, then tells Claude through `ui/update-model-context`. |
+| `submit` action | Calls the app-only `submit_form` tool directly, with no chat turn, then tells Claude through `ui/update-model-context`. It writes its progress into UI state (`/submitting`, then `/submission = { id, receivedAt }` or `/submissionError`), so the spec can show a confirmation with `visible` conditions. |
 | `ask` action | Posts a message into the chat as the user (`ui/message`), so Claude reacts and can call `render_ui` again. |
 | `list_submissions` | Lets Claude read back what the user saved. |
+
+![Confirmation card after Save](docs/submit-confirmation.png)
 
 The catalog (`src/catalog.ts`) currently has Stack, Card, Heading, Text, Badge, TextField, Select and Button. Inputs bind to state with `{ "$bindState": "/form/name" }`, action params read state with `{ "$state": "/form" }`, and elements can show or hide with `visible` conditions.
 

@@ -89,3 +89,4 @@ h3.heading { font-size: 15px; }
 
 .status { margin: 10px 0 0; color: var(--fg-muted); font-size: 13px; }
 .status.error { color: #b91c1c; }
+.card-body > .button { align-self: flex-start; }

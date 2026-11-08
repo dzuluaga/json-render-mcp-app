@@ -1,8 +1,12 @@
 import { defineRegistry, useBoundProp } from "@json-render/react";
+import { immutableSetByPath } from "@json-render/core/store-utils";
 import { catalog } from "./catalog.js";
 
+/** Writes a value at a JSON Pointer path in the rendered UI's state. */
+export type SetStateAt = (path: string, value: unknown) => void;
+
 export interface AppActions {
-  submit: (params: { form?: Record<string, unknown> | null } | undefined) => Promise<void>;
+  submit: (params: { form?: Record<string, unknown> | null } | undefined, setStateAt: SetStateAt) => Promise<void>;
   ask: (params: { message: string; data?: Record<string, unknown> | null } | undefined) => Promise<void>;
 }
 
@@ -64,7 +68,8 @@ export function createRegistry(actions: AppActions) {
       ),
     },
     actions: {
-      submit: (params) => actions.submit(params),
+      submit: (params, setState) =>
+        actions.submit(params, (path, value) => setState((prev) => immutableSetByPath(prev, path, value))),
       ask: (params) => actions.ask(params),
     },
   });
