@@ -79,6 +79,9 @@ describe("json-render MCP app server", () => {
       { root: "a", elements: { a: { type: "Button", props: { label: "x" }, on: { press: { action: "ask", params: { message: "hi" } } } } } },
       { root: "a", elements: { a: { type: "Card", props: {}, children: ["ghost"] } } },
       { root: "missing", elements: { a: { type: "Text", props: { text: "hi" } } } },
+      { root: "a", elements: { a: { type: "Chart", props: { kind: "radar", data: [] } } } },
+      { root: "a", elements: { a: { type: "Svg", props: { svg: "<svg><script>alert(1)</script></svg>" } } } },
+      { root: "a", elements: { a: { type: "Svg", props: { svg: '<svg><image href="https://evil.example/x.png"/></svg>' } } } },
     ];
     for (const spec of bad) {
       const result = await client.callTool({ name: "render_ui", arguments: { spec } });

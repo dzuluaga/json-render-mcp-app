@@ -63,6 +63,11 @@ export const UISpec = z
     if (!(spec.root in spec.elements)) {
       ctx.addIssue({ code: "custom", path: ["root"], message: `root "${spec.root}" is not in elements` });
     }
+    for (const [key, el] of Object.entries(spec.elements)) {
+      if (el.type !== "Svg" || typeof el.props.svg !== "string") continue;
+      const reason = unsafeSvgReason(el.props.svg);
+      if (reason) ctx.addIssue({ code: "custom", path: ["elements", key, "props", "svg"], message: reason });
+    }
     const { valid, issues } = validateSpec(normalizeSpec(spec) as Spec);
     if (!valid) {
       for (const message of formatSpecIssues(issues).split("\n").filter(Boolean)) {
@@ -72,6 +77,14 @@ export const UISpec = z
   });
 
 export type UISpec = z.infer<typeof UISpec>;
+
+// The UI sanitizes Svg markup anyway; rejecting it here tells Claude to redraw cleanly.
+const UNSAFE_SVG = /<script|<foreignObject|\son[a-z]+\s*=|javascript:|(?:href|src)\s*=\s*["']\s*(?!#)[a-z][a-z0-9+.-]*:|url\(\s*["']?\s*(?!#)[a-z][a-z0-9+.-]*:/i;
+
+export function unsafeSvgReason(svg: string): string | null {
+  const match = svg.match(UNSAFE_SVG);
+  return match ? `Svg markup may not contain "${match[0].trim()}" (no scripts, event handlers, foreignObject or external references)` : null;
+}
 
 /** Fill in the `children: []` the renderer and validator expect on leaf elements. */
 export function normalizeSpec<T extends { elements: Record<string, { children?: string[] }> }>(spec: T): T {

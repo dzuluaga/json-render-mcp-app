@@ -43,6 +43,33 @@ export const catalog = defineCatalog(schema, {
       }),
       description: "A small status pill.",
     },
+    Table: {
+      props: z.object({
+        columns: z.array(z.object({ key: z.string(), label: z.string() })),
+        rows: z.array(z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()]))),
+        caption: z.string().nullable(),
+      }),
+      description:
+        'Data table. Each row is an object keyed by column key. Rows can come from state, e.g. rows: { "$state": "/saved/submissions" }.',
+    },
+    Chart: {
+      props: z.object({
+        kind: z.enum(["bar", "line", "pie"]),
+        title: z.string().nullable(),
+        data: z.array(z.object({ label: z.string(), value: z.number() })),
+        unit: z.string().nullable(),
+      }),
+      description: "Bar, line or pie chart from { label, value } points. unit is appended to values (e.g. \"$\", \"%\", \"h\").",
+    },
+    Svg: {
+      props: z.object({
+        svg: z.string(),
+        title: z.string().nullable(),
+        maxWidth: z.number().nullable(),
+      }),
+      description:
+        "An inline drawing: a complete <svg>…</svg> with a viewBox. Use it for illustrations, icons, diagrams and maps. No scripts, event handlers, <foreignObject> or external links/images (they're stripped). Use currentColor to follow the host theme.",
+    },
     TextField: {
       props: z.object({
         label: z.string(),

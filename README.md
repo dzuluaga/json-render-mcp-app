@@ -27,7 +27,13 @@ Claude ──render_ui({ spec })──▶ MCP server ──validated spec──�
 
 ![Confirmation card after Save](docs/submit-confirmation.png)
 
-The catalog (`src/catalog.ts`) currently has Stack, Card, Heading, Text, Badge, TextField, Select and Button. Inputs bind to state with `{ "$bindState": "/form/name" }`, action params read state with `{ "$state": "/form" }`, and elements can show or hide with `visible` conditions.
+The catalog (`src/catalog.ts`) currently has Stack, Card, Heading, Text, Badge, Table, Chart, Svg, TextField, Select and Button.
+
+- **Table:** columns plus rows, which can come from state (for example a `callTool` result).
+- **Chart:** bar, line or pie from `{ label, value }` points, drawn as plain SVG with no chart library.
+- **Svg:** Claude's own drawings (illustrations, icons, diagrams). The server rejects markup with scripts, event handlers, `foreignObject` or external references, and the UI also runs it through DOMPurify. That second layer matters because partial input streams in before the server validates it.
+
+![Dashboard example](docs/dashboard.png) Inputs bind to state with `{ "$bindState": "/form/name" }`, action params read state with `{ "$state": "/form" }`, and elements can show or hide with `visible` conditions.
 
 ## Prompts
 
@@ -38,7 +44,7 @@ The server also publishes two MCP prompts. In Claude Desktop, pick them from the
 | `ui` | `request`: anything | Claude answers that request with `render_ui` rather than prose, with buttons for the next steps. |
 | `no-textbox` | `topic` (optional) | Claude draws a whole branching flow in one spec. Buttons move between screens with `setState` and add to a breadcrumb with `pushState`, and endings get a Save button. Nothing is typed into the chat. |
 
-`examples/no-textbox.json` shows the first screen. To preview it in the test host, open `dev/host.html?example=no-textbox`.
+`examples/no-textbox.json` shows the first screen. To preview examples in the test host, open `dev/host.html?example=no-textbox` or `?example=dashboard`.
 
 ## Run it
 

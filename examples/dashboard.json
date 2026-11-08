@@ -1,0 +1,207 @@
+{
+  "root": "page",
+  "elements": {
+    "page": {
+      "type": "Stack",
+      "props": {
+        "gap": "md"
+      },
+      "children": [
+        "header",
+        "charts",
+        "tasks"
+      ]
+    },
+    "header": {
+      "type": "Card",
+      "props": {
+        "title": "Your week",
+        "subtitle": "Nov 2 \u2013 Nov 8"
+      },
+      "children": [
+        "art"
+      ]
+    },
+    "art": {
+      "type": "Svg",
+      "props": {
+        "title": "Sunrise over the week",
+        "maxWidth": 360,
+        "svg": "<svg viewBox=\"0 0 360 90\" xmlns=\"http://www.w3.org/2000/svg\"><defs><linearGradient id=\"sky\" x1=\"0\" x2=\"0\" y1=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#fde68a\"/><stop offset=\"1\" stop-color=\"#fdba74\"/></linearGradient></defs><rect width=\"360\" height=\"90\" rx=\"10\" fill=\"url(#sky)\"/><circle cx=\"180\" cy=\"78\" r=\"30\" fill=\"#f97316\"/><path d=\"M0 78 Q90 50 180 70 T360 62 V90 H0Z\" fill=\"#0f766e\" opacity=\".85\"/><g stroke=\"#f97316\" stroke-width=\"3\" stroke-linecap=\"round\"><path d=\"M180 30v-14\"/><path d=\"M140 42l-9-10\"/><path d=\"M220 42l9-10\"/></g></svg>"
+      }
+    },
+    "charts": {
+      "type": "Stack",
+      "props": {
+        "direction": "horizontal",
+        "gap": "md"
+      },
+      "children": [
+        "focus",
+        "split",
+        "steps"
+      ]
+    },
+    "focus": {
+      "type": "Card",
+      "props": {},
+      "children": [
+        "focusChart"
+      ]
+    },
+    "focusChart": {
+      "type": "Chart",
+      "props": {
+        "kind": "bar",
+        "title": "Focus hours",
+        "unit": "h",
+        "data": [
+          {
+            "label": "Mon",
+            "value": 4.5
+          },
+          {
+            "label": "Tue",
+            "value": 6
+          },
+          {
+            "label": "Wed",
+            "value": 3
+          },
+          {
+            "label": "Thu",
+            "value": 5.5
+          },
+          {
+            "label": "Fri",
+            "value": 2
+          }
+        ]
+      }
+    },
+    "split": {
+      "type": "Card",
+      "props": {},
+      "children": [
+        "splitChart"
+      ]
+    },
+    "splitChart": {
+      "type": "Chart",
+      "props": {
+        "kind": "pie",
+        "title": "Where the time went",
+        "unit": "h",
+        "data": [
+          {
+            "label": "Building",
+            "value": 21
+          },
+          {
+            "label": "Meetings",
+            "value": 9
+          },
+          {
+            "label": "Review",
+            "value": 6
+          },
+          {
+            "label": "Email",
+            "value": 4
+          }
+        ]
+      }
+    },
+    "steps": {
+      "type": "Card",
+      "props": {},
+      "children": [
+        "stepsChart"
+      ]
+    },
+    "stepsChart": {
+      "type": "Chart",
+      "props": {
+        "kind": "line",
+        "title": "Steps (thousands)",
+        "unit": "k",
+        "data": [
+          {
+            "label": "Mon",
+            "value": 6.2
+          },
+          {
+            "label": "Tue",
+            "value": 8.1
+          },
+          {
+            "label": "Wed",
+            "value": 4.4
+          },
+          {
+            "label": "Thu",
+            "value": 9.7
+          },
+          {
+            "label": "Fri",
+            "value": 7.3
+          },
+          {
+            "label": "Sat",
+            "value": 12.5
+          },
+          {
+            "label": "Sun",
+            "value": 10.1
+          }
+        ]
+      }
+    },
+    "tasks": {
+      "type": "Card",
+      "props": {
+        "title": "Shipped"
+      },
+      "children": [
+        "taskTable"
+      ]
+    },
+    "taskTable": {
+      "type": "Table",
+      "props": {
+        "caption": null,
+        "columns": [
+          {
+            "key": "task",
+            "label": "Task"
+          },
+          {
+            "key": "owner",
+            "label": "Owner"
+          },
+          {
+            "key": "hours",
+            "label": "Hours"
+          }
+        ],
+        "rows": [
+          {
+            "task": "Onboarding flow",
+            "owner": "Ada",
+            "hours": 9
+          },
+          {
+            "task": "Quarterly report",
+            "owner": "Grace",
+            "hours": 6
+          },
+          {
+            "task": "Search prototype",
+            "owner": "Linus",
+            "hours": 11
+          }
+        ]
+      }
+    }
+  }
+}
