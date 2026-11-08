@@ -57,7 +57,7 @@ export function createServer(submissions: Submission[] = []): McpServer {
 
 ${describeCatalog()}
 
-Bind inputs to state with { "$bindState": "/path" } and read state with { "$state": "/path" }; seed it with spec.state. Use "submit" for data the server should keep and "ask" when you want to react to the user's choice. Calling render_ui again replaces the UI.`,
+Bind inputs to state with { "$bindState": "/path" } and read state with { "$state": "/path" }; seed it with spec.state. Build strings with { "$template": "Hi \${/form/name}" }. To list items, give a Stack repeat: { "statePath": "/items" } and read each item in its children with { "$item": "field" }. Use "submit" for data the server should keep and "ask" when you want to react to the user's choice. Calling render_ui again replaces the UI.`,
       inputSchema: z.object({ spec: UISpec }),
       _meta: { ui: { resourceUri: RESOURCE_URI } },
     },
@@ -100,6 +100,54 @@ Bind inputs to state with { "$bindState": "/path" } and read state with { "$stat
     async (): Promise<CallToolResult> => ({
       content: [{ type: "text", text: JSON.stringify(submissions, null, 2) }],
       structuredContent: { submissions },
+    }),
+  );
+
+  server.registerPrompt(
+    "ui",
+    {
+      title: "Answer with UI",
+      description: "Turn any request into an interactive UI drawn with render_ui.",
+      argsSchema: z.object({ request: z.string().describe("What you want, e.g. 'compare three laptops under $1500'") }),
+    },
+    ({ request }) => ({
+      messages: [
+        {
+          role: "user",
+          content: {
+            type: "text",
+            text: `${request}
+
+Answer with render_ui instead of prose: lay out the result as cards, text, badges and inputs, and give me buttons for the obvious next steps ("ask" for anything you should react to, "submit" for anything worth saving). Keep any chat text to one short line.`,
+          },
+        },
+      ],
+    }),
+  );
+
+  server.registerPrompt(
+    "no-textbox",
+    {
+      title: "No-textbox mode",
+      description: "A conversation driven only by buttons: every choice redraws the next screen.",
+      argsSchema: z.object({ topic: z.string().optional().describe("Optional starting topic") }),
+    },
+    ({ topic }) => ({
+      messages: [
+        {
+          role: "user",
+          content: {
+            type: "text",
+            text: `Let's talk without a text box${topic ? ` about ${topic}` : ""}. Rules:
+- Every turn, call render_ui and nothing else worth reading in chat.
+- Show one question as a Card with 2–4 choice Buttons plus a "Surprise me" button. Every button uses the "ask" action with params { "message": "I chose: <choice>", "data": { "trail": [...labels so far] } }.
+- Keep a breadcrumb: seed spec.state.trail with [{ "label": ... }] for each choice so far and render it as Badges in a Stack with repeat: { "statePath": "/trail" }.
+- If a choice seems like a mistake, honor it anyway, add a muted Text saying what it gives up, and offer a button to go back.
+- When a path reaches a natural end, show the result in a Card with a "Save" button (action "submit", form = the whole trail and result).
+Start now with the first screen.`,
+          },
+        },
+      ],
     }),
   );
 

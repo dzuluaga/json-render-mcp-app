@@ -3,7 +3,10 @@
 // would by calling render_ui and streaming its arguments in.
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import { AppBridge, PostMessageTransport } from "@modelcontextprotocol/ext-apps/app-bridge";
-import planPicker from "../examples/plan-picker.json";
+// Pick an example with ?example=<name> (defaults to plan-picker).
+const examples = import.meta.glob<{ elements: Record<string, unknown> }>("../examples/*.json", { eager: true, import: "default" });
+const exampleName = new URLSearchParams(location.search).get("example") ?? "plan-picker";
+const example = examples[`../examples/${exampleName}.json`];
 
 const log = (label: string, data?: unknown) => {
   const el = document.getElementById("log")!;
@@ -42,15 +45,15 @@ document.getElementById("run")!.addEventListener("click", () => {
 async function simulateRenderUi() {
   log("streaming render_ui arguments…");
   // Stream the spec in element by element, like partial tool input from Claude.
-  const keys = Object.keys(planPicker.elements);
+  const keys = Object.keys(example.elements);
   for (let i = 1; i <= keys.length; i++) {
-    const elements = Object.fromEntries(keys.slice(0, i).map((k) => [k, (planPicker.elements as Record<string, unknown>)[k]]));
-    await bridge.sendToolInputPartial({ arguments: { spec: { ...planPicker, elements } } });
+    const elements = Object.fromEntries(keys.slice(0, i).map((k) => [k, (example.elements as Record<string, unknown>)[k]]));
+    await bridge.sendToolInputPartial({ arguments: { spec: { ...example, elements } } });
     await new Promise((r) => setTimeout(r, 150));
   }
-  await bridge.sendToolInput({ arguments: { spec: planPicker } });
-  const result = await client.callTool({ name: "render_ui", arguments: { spec: planPicker } });
+  await bridge.sendToolInput({ arguments: { spec: example } });
+  const result = await client.callTool({ name: "render_ui", arguments: { spec: example } });
   log("render_ui result", result.content);
   await bridge.sendToolResult(result as Parameters<typeof bridge.sendToolResult>[0]);
 }
-log("ready — click the button");
+log(`ready — click the button to render examples/${exampleName}.json`);

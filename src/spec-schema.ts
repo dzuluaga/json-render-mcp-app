@@ -35,6 +35,13 @@ const elementVariants = Object.entries(catalog.data.components).map(([type, def]
     children: z.array(z.string()).optional().describe("Keys of child elements"),
     visible: z.unknown().optional().describe('Visibility condition, e.g. { "$state": "/form/agree" }'),
     on: z.record(z.string(), z.union([ActionBinding, z.array(ActionBinding)])).optional(),
+    repeat: z
+      .object({
+        statePath: z.union([z.string(), z.object({ $item: z.string() })]),
+        key: z.string().optional(),
+      })
+      .optional()
+      .describe('Render children once per item of the state array at statePath; children read fields with { "$item": "field" }'),
   }),
 );
 

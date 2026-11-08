@@ -1,5 +1,6 @@
 import { Client } from "@modelcontextprotocol/client";
 import { InMemoryTransport } from "@modelcontextprotocol/server";
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { createServer, RESOURCE_URI } from "../server.js";
 
@@ -76,6 +77,27 @@ describe("json-render MCP app server", () => {
       const result = await client.callTool({ name: "render_ui", arguments: { spec } });
       expect(result.isError, JSON.stringify(spec)).toBe(true);
     }
+  });
+
+  it.each(readdirSync("examples"))("accepts examples/%s", async (file) => {
+    const client = await connect();
+    const spec = JSON.parse(readFileSync(`examples/${file}`, "utf8"));
+    const result = await client.callTool({ name: "render_ui", arguments: { spec } });
+    expect(result.isError, JSON.stringify(result.content)).toBeFalsy();
+  });
+
+  it("offers ui and no-textbox prompts that fill in their arguments", async () => {
+    const client = await connect();
+    const { prompts } = await client.listPrompts();
+    expect(prompts.map((p) => p.name)).toEqual(expect.arrayContaining(["ui", "no-textbox"]));
+
+    const ui = await client.getPrompt({ name: "ui", arguments: { request: "compare three laptops" } });
+    const uiText = (ui.messages[0].content as { text: string }).text;
+    expect(uiText).toContain("compare three laptops");
+    expect(uiText).toContain("render_ui");
+
+    const adventure = await client.getPrompt({ name: "no-textbox", arguments: { topic: "a weekend in Lisbon" } });
+    expect((adventure.messages[0].content as { text: string }).text).toContain("about a weekend in Lisbon");
   });
 
   it("stores submissions from the UI and lists them for the model", async () => {

@@ -1,0 +1,76 @@
+{
+  "root": "page",
+  "state": {
+    "trail": [{ "label": "Start" }]
+  },
+  "elements": {
+    "page": {
+      "type": "Stack",
+      "props": { "gap": "md" },
+      "children": ["trail", "screen"]
+    },
+    "trail": {
+      "type": "Stack",
+      "props": { "direction": "horizontal", "gap": "sm" },
+      "repeat": { "statePath": "/trail" },
+      "children": ["crumb"]
+    },
+    "crumb": {
+      "type": "Badge",
+      "props": { "label": { "$item": "label" }, "tone": "info" }
+    },
+    "screen": {
+      "type": "Card",
+      "props": {
+        "title": "What are we building today?",
+        "subtitle": "No typing. Pick a path and I'll draw the next screen."
+      },
+      "children": ["choices", "surprise"]
+    },
+    "choices": {
+      "type": "Stack",
+      "props": { "direction": "horizontal", "gap": "sm" },
+      "children": ["trip", "product", "story"]
+    },
+    "trip": {
+      "type": "Button",
+      "props": { "label": "A trip" },
+      "on": {
+        "press": {
+          "action": "ask",
+          "params": { "message": "I chose: A trip", "data": { "trail": ["Start", "A trip"] } }
+        }
+      }
+    },
+    "product": {
+      "type": "Button",
+      "props": { "label": "A product" },
+      "on": {
+        "press": {
+          "action": "ask",
+          "params": { "message": "I chose: A product", "data": { "trail": ["Start", "A product"] } }
+        }
+      }
+    },
+    "story": {
+      "type": "Button",
+      "props": { "label": "A story" },
+      "on": {
+        "press": {
+          "action": "ask",
+          "params": { "message": "I chose: A story", "data": { "trail": ["Start", "A story"] } }
+        }
+      }
+    },
+    "surprise": {
+      "type": "Button",
+      "props": { "label": "Surprise me", "variant": "secondary" },
+      "on": {
+        "press": {
+          "action": "ask",
+          "params": { "message": "Surprise me: pick a path for me and say why.", "data": { "trail": ["Start"] } }
+        }
+      }
+    }
+  }
+}

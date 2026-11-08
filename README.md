@@ -28,6 +28,17 @@ Claude ──render_ui({ spec })──▶ MCP server ──validated spec──�
 
 The catalog (`src/catalog.ts`) currently has Stack, Card, Heading, Text, Badge, TextField, Select and Button. Inputs bind to state with `{ "$bindState": "/form/name" }`, action params read state with `{ "$state": "/form" }`, and elements can show or hide with `visible` conditions.
 
+## Prompts
+
+The server also publishes two MCP prompts. In Claude Desktop, pick them from the attachment ("+") menu under this server:
+
+| Prompt | Argument | What it does |
+| --- | --- | --- |
+| `ui` | `request`: anything | Claude answers that request with `render_ui` rather than prose, with buttons for the next steps. |
+| `no-textbox` | `topic` (optional) | A conversation driven only by buttons. Each choice is an `ask` that hands the turn back, and Claude redraws the next screen with a breadcrumb of your path. Endings get a Save button. |
+
+`examples/no-textbox.json` shows the first screen. To preview it in the test host, open `dev/host.html?example=no-textbox`.
+
 ## Run it
 
 Requires Node 22 or later.
