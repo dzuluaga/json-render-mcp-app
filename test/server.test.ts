@@ -49,6 +49,7 @@ describe("json-render MCP app server", () => {
     expect(names).toEqual(expect.arrayContaining(["render_ui", "submit_form", "list_submissions"]));
 
     const renderUi = tools.find((t) => t.name === "render_ui")!;
+    expect(renderUi.description).toMatch(/^Use this tool whenever the user asks to see, show, draw/);
     expect(renderUi._meta).toMatchObject({ ui: { resourceUri: RESOURCE_URI } });
     const schema = JSON.stringify(renderUi.inputSchema);
     expect(schema).toContain('"Button"');
@@ -105,6 +106,7 @@ describe("json-render MCP app server", () => {
     const uiText = (ui.messages[0].content as { text: string }).text;
     expect(uiText).toContain("compare three laptops");
     expect(uiText).toContain("render_ui");
+    expect(uiText).toContain("not with an artifact");
 
     const adventure = await client.getPrompt({ name: "no-textbox", arguments: { topic: "a weekend in Lisbon" } });
     const adventureText = (adventure.messages[0].content as { text: string }).text;

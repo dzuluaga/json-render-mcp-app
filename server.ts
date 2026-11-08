@@ -53,7 +53,9 @@ export function createServer(submissions: Submission[] = []): McpServer {
     "render_ui",
     {
       title: "Render UI",
-      description: `Show the user an interactive UI, described as a json-render spec: a flat map of elements keyed by id, each with a component type, props, optional children (element keys) and optional "on" event bindings.
+      description: `Use this tool whenever the user asks to see, show, draw, visualize, chart or lay out something: dashboards, charts, tables, forms, comparisons, drawings, diagrams, step-by-step flows. Prefer it over writing an HTML/React artifact or code block. It renders inline, live, with buttons wired to this server's tools.
+
+Shows the user an interactive UI, described as a json-render spec: a flat map of elements keyed by id, each with a component type, props, optional children (element keys) and optional "on" event bindings.
 
 ${describeCatalog()}
 
@@ -118,7 +120,7 @@ Bind inputs to state with { "$bindState": "/path" } and read state with { "$stat
             type: "text",
             text: `${request}
 
-Answer with render_ui instead of prose: lay out the result as cards, text, badges and inputs, and give me buttons for the obvious next steps: setState/pushState to move between screens, "submit" for anything worth saving, "callTool" to run a tool on this server. Buttons must never type into the chat. Keep any chat text to one short line.`,
+Answer by calling the render_ui tool, not with prose and not with an artifact or code block: lay out the result as cards, text, badges and inputs, and give me buttons for the obvious next steps: setState/pushState to move between screens, "submit" for anything worth saving, "callTool" to run a tool on this server. Buttons must never type into the chat. Keep any chat text to one short line.`,
           },
         },
       ],
@@ -138,7 +140,7 @@ Answer with render_ui instead of prose: lay out the result as cards, text, badge
           role: "user",
           content: {
             type: "text",
-            text: `Let's talk without a text box${topic ? ` about ${topic}` : ""}. Draw the whole conversation as ONE render_ui spec that I navigate with buttons:
+            text: `Let's talk without a text box${topic ? ` about ${topic}` : ""}. Draw the whole conversation as ONE call to the render_ui tool (not an artifact) that I navigate with buttons:
 - Build a decision tree 2–3 levels deep. Each screen is a Card with a question and 2–4 choice Buttons, shown with visible: { "$state": "/step", "eq": "<screen id>" }. Seed spec.state with { "step": "start", "trail": [{ "label": "Start" }] }.
 - A choice button runs two actions: [{ "action": "setState", "params": { "statePath": "/step", "value": "<next screen id>" } }, { "action": "pushState", "params": { "statePath": "/trail", "value": { "label": "<choice>" } } }].
 - Show the trail above the screens as Badges in a horizontal Stack with repeat: { "statePath": "/trail" } and label { "$item": "label" }.
