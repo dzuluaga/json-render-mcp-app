@@ -1,0 +1,91 @@
+/* Host CSS variables (via useHostStyles) with standalone fallbacks. */
+:root {
+  color-scheme: light dark;
+  --bg: var(--color-background-primary, Canvas);
+  --bg-subtle: var(--color-background-secondary, color-mix(in srgb, CanvasText 5%, Canvas));
+  --fg: var(--color-text-primary, CanvasText);
+  --fg-muted: var(--color-text-secondary, color-mix(in srgb, CanvasText 60%, Canvas));
+  --border: var(--color-border-primary, color-mix(in srgb, CanvasText 15%, Canvas));
+  --accent: #4f46e5;
+  --radius: var(--border-radius-md, 8px);
+  font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+main {
+  padding: 12px;
+}
+
+.stack { display: flex; flex-direction: column; }
+.stack.horizontal { flex-direction: row; flex-wrap: wrap; align-items: center; }
+.gap-sm { gap: 6px; }
+.gap-md { gap: 12px; }
+.gap-lg { gap: 20px; }
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  background: var(--bg);
+}
+.card-title { margin: 0; font-size: 15px; }
+.card-subtitle { margin: 2px 0 0; color: var(--fg-muted); }
+.card-body { margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
+
+.heading { margin: 0; }
+h1.heading { font-size: 20px; }
+h2.heading { font-size: 17px; }
+h3.heading { font-size: 15px; }
+
+.text { margin: 0; }
+.tone-muted { color: var(--fg-muted); }
+.tone-success { color: #15803d; }
+.tone-danger { color: #b91c1c; }
+
+.badge {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+}
+.badge.tone-info { color: #1d4ed8; }
+.badge.tone-success { color: #15803d; }
+.badge.tone-warning { color: #b45309; }
+.badge.tone-danger { color: #b91c1c; }
+
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field span { font-size: 12px; color: var(--fg-muted); }
+.field input,
+.field select {
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 7px 9px;
+}
+
+.button {
+  font: inherit;
+  border-radius: var(--radius);
+  padding: 7px 14px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--bg-subtle);
+  color: var(--fg);
+}
+.button.primary { background: var(--accent); border-color: var(--accent); color: white; }
+.button:disabled { opacity: 0.5; cursor: default; }
+
+.status { margin: 10px 0 0; color: var(--fg-muted); font-size: 13px; }
+.status.error { color: #b91c1c; }

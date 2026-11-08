@@ -1,0 +1,88 @@
+import { Client } from "@modelcontextprotocol/client";
+import { InMemoryTransport } from "@modelcontextprotocol/server";
+import { describe, expect, it } from "vitest";
+import { createServer, RESOURCE_URI } from "../server.js";
+
+async function connect() {
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  await createServer().connect(serverTransport);
+  const client = new Client({ name: "test", version: "0.0.0" });
+  await client.connect(clientTransport);
+  return client;
+}
+
+const planPicker = {
+  root: "card",
+  state: { form: { plan: "" } },
+  elements: {
+    card: { type: "Card", props: { title: "Pick a plan" }, children: ["plan", "go"] },
+    plan: {
+      type: "Select",
+      props: {
+        label: "Plan",
+        value: { $bindState: "/form/plan" },
+        options: [
+          { value: "free", label: "Free" },
+          { value: "pro", label: "Pro" },
+        ],
+      },
+    },
+    go: {
+      type: "Button",
+      props: { label: "Continue" },
+      on: { press: { action: "ask", params: { message: "User picked a plan", data: { $state: "/form" } } } },
+    },
+  },
+};
+
+describe("json-render MCP app server", () => {
+  it("exposes render_ui to the model with a typed spec schema and the UI resource", async () => {
+    const client = await connect();
+    const { tools } = await client.listTools();
+    const names = tools.map((t) => t.name);
+    expect(names).toEqual(expect.arrayContaining(["render_ui", "submit_form", "list_submissions"]));
+
+    const renderUi = tools.find((t) => t.name === "render_ui")!;
+    expect(renderUi._meta).toMatchObject({ ui: { resourceUri: RESOURCE_URI } });
+    const schema = JSON.stringify(renderUi.inputSchema);
+    expect(schema).toContain('"Button"');
+    expect(schema).toContain('"on"');
+
+    const submitForm = tools.find((t) => t.name === "submit_form")!;
+    expect(submitForm._meta).toMatchObject({ ui: { visibility: ["app"] } });
+
+    const resource = await client.readResource({ uri: RESOURCE_URI });
+    expect(resource.contents[0]).toMatchObject({ mimeType: "text/html;profile=mcp-app" });
+  });
+
+  it("returns a normalized spec for a valid render_ui call", async () => {
+    const client = await connect();
+    const result = await client.callTool({ name: "render_ui", arguments: { spec: planPicker } });
+    expect(result.isError).toBeFalsy();
+    const spec = (result.structuredContent as { spec: typeof planPicker }).spec;
+    expect(spec.elements.plan).toMatchObject({ children: [] });
+    expect(spec.elements.go.on.press.action).toBe("ask");
+  });
+
+  it("rejects unknown components, unknown actions and dangling children", async () => {
+    const client = await connect();
+    const bad = [
+      { root: "a", elements: { a: { type: "Marquee", props: {} } } },
+      { root: "a", elements: { a: { type: "Button", props: { label: "x" }, on: { press: { action: "launch" } } } } },
+      { root: "a", elements: { a: { type: "Card", props: {}, children: ["ghost"] } } },
+      { root: "missing", elements: { a: { type: "Text", props: { text: "hi" } } } },
+    ];
+    for (const spec of bad) {
+      const result = await client.callTool({ name: "render_ui", arguments: { spec } });
+      expect(result.isError, JSON.stringify(spec)).toBe(true);
+    }
+  });
+
+  it("stores submissions from the UI and lists them for the model", async () => {
+    const client = await connect();
+    await client.callTool({ name: "submit_form", arguments: { form: { plan: "pro" } } });
+    const result = await client.callTool({ name: "list_submissions", arguments: {} });
+    const { submissions } = result.structuredContent as { submissions: { id: number; form: unknown }[] };
+    expect(submissions).toEqual([expect.objectContaining({ id: 1, form: { plan: "pro" } })]);
+  });
+});
