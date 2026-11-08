@@ -31,7 +31,12 @@ const planPicker = {
     go: {
       type: "Button",
       props: { label: "Continue" },
-      on: { press: { action: "ask", params: { message: "User picked a plan", data: { $state: "/form" } } } },
+      on: {
+        press: {
+          action: "callTool",
+          params: { name: "list_submissions", arguments: {}, resultPath: "/saved" },
+        },
+      },
     },
   },
 };
@@ -62,7 +67,7 @@ describe("json-render MCP app server", () => {
     expect(result.isError).toBeFalsy();
     const spec = (result.structuredContent as { spec: typeof planPicker }).spec;
     expect(spec.elements.plan).toMatchObject({ children: [] });
-    expect(spec.elements.go.on.press.action).toBe("ask");
+    expect(spec.elements.go.on.press.action).toBe("callTool");
   });
 
   it("rejects unknown components, unknown actions and dangling children", async () => {
@@ -70,6 +75,8 @@ describe("json-render MCP app server", () => {
     const bad = [
       { root: "a", elements: { a: { type: "Marquee", props: {} } } },
       { root: "a", elements: { a: { type: "Button", props: { label: "x" }, on: { press: { action: "launch" } } } } },
+      // `ask` typed into the chat box; it's gone so buttons can't do that anymore.
+      { root: "a", elements: { a: { type: "Button", props: { label: "x" }, on: { press: { action: "ask", params: { message: "hi" } } } } } },
       { root: "a", elements: { a: { type: "Card", props: {}, children: ["ghost"] } } },
       { root: "missing", elements: { a: { type: "Text", props: { text: "hi" } } } },
     ];
@@ -97,7 +104,9 @@ describe("json-render MCP app server", () => {
     expect(uiText).toContain("render_ui");
 
     const adventure = await client.getPrompt({ name: "no-textbox", arguments: { topic: "a weekend in Lisbon" } });
-    expect((adventure.messages[0].content as { text: string }).text).toContain("about a weekend in Lisbon");
+    const adventureText = (adventure.messages[0].content as { text: string }).text;
+    expect(adventureText).toContain("about a weekend in Lisbon");
+    expect(uiText + adventureText).not.toMatch(/"ask"/);
   });
 
   it("stores submissions from the UI and lists them for the model", async () => {
@@ -106,5 +115,6 @@ describe("json-render MCP app server", () => {
     const result = await client.callTool({ name: "list_submissions", arguments: {} });
     const { submissions } = result.structuredContent as { submissions: { id: number; form: unknown }[] };
     expect(submissions).toEqual([expect.objectContaining({ id: 1, form: { plan: "pro" } })]);
+    expect(result.structuredContent).toMatchObject({ count: 1 });
   });
 });

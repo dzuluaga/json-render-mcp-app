@@ -57,7 +57,7 @@ export function createServer(submissions: Submission[] = []): McpServer {
 
 ${describeCatalog()}
 
-Bind inputs to state with { "$bindState": "/path" } and read state with { "$state": "/path" }; seed it with spec.state. Build strings with { "$template": "Hi \${/form/name}" }. To list items, give a Stack repeat: { "statePath": "/items" } and read each item in its children with { "$item": "field" }. Use "submit" for data the server should keep and "ask" when you want to react to the user's choice. Calling render_ui again replaces the UI.`,
+Bind inputs to state with { "$bindState": "/path" } and read state with { "$state": "/path" }; seed it with spec.state. Build strings with { "$template": "Hi \${/form/name}" }. To list items, give a Stack repeat: { "statePath": "/items" } and read each item in its children with { "$item": "field" }. Buttons never type into the chat. Use "submit" for data the server should keep, "callTool" to run a tool on this server (list_submissions returns { submissions, count }), and setState / pushState for navigation inside the UI (show screens with visible: { "$state": "/step", "eq": "..." }). Calling render_ui again replaces the UI.`,
       inputSchema: z.object({ spec: UISpec }),
       _meta: { ui: { resourceUri: RESOURCE_URI } },
     },
@@ -99,7 +99,7 @@ Bind inputs to state with { "$bindState": "/path" } and read state with { "$stat
     },
     async (): Promise<CallToolResult> => ({
       content: [{ type: "text", text: JSON.stringify(submissions, null, 2) }],
-      structuredContent: { submissions },
+      structuredContent: { submissions, count: submissions.length },
     }),
   );
 
@@ -118,7 +118,7 @@ Bind inputs to state with { "$bindState": "/path" } and read state with { "$stat
             type: "text",
             text: `${request}
 
-Answer with render_ui instead of prose: lay out the result as cards, text, badges and inputs, and give me buttons for the obvious next steps ("ask" for anything you should react to, "submit" for anything worth saving). Keep any chat text to one short line.`,
+Answer with render_ui instead of prose: lay out the result as cards, text, badges and inputs, and give me buttons for the obvious next steps: setState/pushState to move between screens, "submit" for anything worth saving, "callTool" to run a tool on this server. Buttons must never type into the chat. Keep any chat text to one short line.`,
           },
         },
       ],
@@ -129,7 +129,7 @@ Answer with render_ui instead of prose: lay out the result as cards, text, badge
     "no-textbox",
     {
       title: "No-textbox mode",
-      description: "A conversation driven only by buttons: every choice redraws the next screen.",
+      description: "A button-only conversation: Claude draws a whole branching flow you click through, nothing typed.",
       argsSchema: z.object({ topic: z.string().optional().describe("Optional starting topic") }),
     },
     ({ topic }) => ({
@@ -138,13 +138,14 @@ Answer with render_ui instead of prose: lay out the result as cards, text, badge
           role: "user",
           content: {
             type: "text",
-            text: `Let's talk without a text box${topic ? ` about ${topic}` : ""}. Rules:
-- Every turn, call render_ui and nothing else worth reading in chat.
-- Show one question as a Card with 2–4 choice Buttons plus a "Surprise me" button. Every button uses the "ask" action with params { "message": "I chose: <choice>", "data": { "trail": [...labels so far] } }.
-- Keep a breadcrumb: seed spec.state.trail with [{ "label": ... }] for each choice so far and render it as Badges in a Stack with repeat: { "statePath": "/trail" }.
-- If a choice seems like a mistake, honor it anyway, add a muted Text saying what it gives up, and offer a button to go back.
-- When a path reaches a natural end, show the result in a Card with a "Save" button (action "submit", form = the whole trail and result).
-Start now with the first screen.`,
+            text: `Let's talk without a text box${topic ? ` about ${topic}` : ""}. Draw the whole conversation as ONE render_ui spec that I navigate with buttons:
+- Build a decision tree 2–3 levels deep. Each screen is a Card with a question and 2–4 choice Buttons, shown with visible: { "$state": "/step", "eq": "<screen id>" }. Seed spec.state with { "step": "start", "trail": [{ "label": "Start" }] }.
+- A choice button runs two actions: [{ "action": "setState", "params": { "statePath": "/step", "value": "<next screen id>" } }, { "action": "pushState", "params": { "statePath": "/trail", "value": { "label": "<choice>" } } }].
+- Show the trail above the screens as Badges in a horizontal Stack with repeat: { "statePath": "/trail" } and label { "$item": "label" }.
+- Give every screen after the first a "Start over" button that sets /step to "start" and /trail back to [{ "label": "Start" }].
+- If a choice looks like a mistake, still let me take it, but put a muted Text on the next screen saying what it gives up.
+- Leaf screens show a concrete result and a "Save" button (action "submit", form: { "trail": { "$state": "/trail" }, "result": "<the result>" }) plus a confirmation card shown when /submission is set.
+- Never use buttons that type into the chat. Keep chat text to one short line.`,
           },
         },
       ],

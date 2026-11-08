@@ -77,13 +77,14 @@ export const catalog = defineCatalog(schema, {
       description:
         'Saves data on the MCP server without starting a new chat turn. Pass the form state, e.g. params: { "form": { "$state": "/form" } }. While saving, state /submitting is true; on success /submission is { id, receivedAt }; on failure /submissionError is the message. Design for it: show a confirmation with visible: { "$state": "/submission" } and hide the form with visible: { "$state": "/submission", "not": true }. Claude is told about the submission through model context.',
     },
-    ask: {
+    callTool: {
       params: z.object({
-        message: z.string(),
-        data: z.record(z.string(), z.unknown()).nullable(),
+        name: z.string(),
+        arguments: z.record(z.string(), z.unknown()).nullable(),
+        resultPath: z.string().nullable(),
       }),
       description:
-        'Hands the turn back to Claude by posting `message` (plus optional `data`) into the chat as the user. Use for choices Claude should react to, e.g. "User picked the Pro plan".',
+        'Calls an MCP tool on this server directly; nothing is typed into the chat. Arguments can read state, e.g. { "plan": { "$state": "/form/plan" } }. While running, /calls/<name>/status is "pending", then "done" or "error" (with /calls/<name>/error). The tool\'s structured result is written to resultPath (default /result) for the spec to display. If the tool returns { "spec": ... }, the UI is replaced by that spec. Claude sees each call and its result through model context on the next turn.',
     },
   },
 });

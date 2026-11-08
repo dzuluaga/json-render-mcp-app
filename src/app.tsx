@@ -109,15 +109,45 @@ function JsonRenderView() {
           content: [{ type: "text", text: `The user submitted submission #${id} from the UI: ${JSON.stringify(form)}` }],
         });
       },
-      // Hand the turn back to Claude.
-      ask: async (params) => {
-        if (!app || !params?.message) return;
-        const data = params.data ? `\n\n${JSON.stringify(params.data, null, 2)}` : "";
-        const result = await app.sendMessage({
-          role: "user",
-          content: [{ type: "text", text: `${params.message}${data}` }],
+      // Call any tool on this server. Nothing goes into the chat box; the result
+      // lands in UI state (or replaces the UI if the tool returns a spec).
+      callTool: async (params, setStateAt) => {
+        if (!app || !params?.name) return;
+        const { name } = params;
+        const args = params.arguments ?? {};
+        setStateAt(`/calls/${name}`, { status: "pending" });
+        let result;
+        try {
+          result = await app.callServerTool({ name, arguments: args });
+        } catch (e) {
+          setStateAt(`/calls/${name}`, { status: "error", error: String(e) });
+          setStatus({ kind: "error", text: `${name} failed.` });
+          return;
+        }
+        const text = result.content?.find((c) => c.type === "text")?.text;
+        if (result.isError) {
+          setStateAt(`/calls/${name}`, { status: "error", error: text ?? "Tool error" });
+          setStatus({ kind: "error", text: text ?? `${name} failed.` });
+          return;
+        }
+        setStateAt(`/calls/${name}`, { status: "done" });
+        const structured = result.structuredContent as Record<string, unknown> | undefined;
+        const nextSpec = prepareSpec(structured?.spec);
+        if (nextSpec) {
+          setRenderId((n) => n + 1);
+          setSpec(nextSpec);
+        } else {
+          setStateAt(params.resultPath ?? "/result", structured ?? { text });
+        }
+        setStatus(null);
+        await app.updateModelContext({
+          content: [
+            {
+              type: "text",
+              text: `From the UI, the user called ${name}(${JSON.stringify(args)}) and got: ${JSON.stringify(structured ?? text)}`,
+            },
+          ],
         });
-        setStatus(result.isError ? { kind: "error", text: "The host declined the message." } : { kind: "info", text: "Sent to Claude." });
       },
     }),
     [app],
@@ -147,7 +177,7 @@ function SpecView({ spec, registry, actions, loading }: { spec: Spec; registry: 
     <ActionProvider
       handlers={{
         submit: (p) => actions.submit(p as Parameters<AppActions["submit"]>[0], set),
-        ask: (p) => actions.ask(p as Parameters<AppActions["ask"]>[0]),
+        callTool: (p) => actions.callTool(p as Parameters<AppActions["callTool"]>[0], set),
       }}
     >
       <Renderer spec={spec} registry={registry} loading={loading} />

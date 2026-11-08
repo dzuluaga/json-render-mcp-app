@@ -2,7 +2,7 @@
 
 Claude acts as the agent and draws interactive UI with [json-render](https://json-render.dev/), rendered inline by the host through [MCP Apps](https://github.com/modelcontextprotocol/ext-apps).
 
-Claude calls `render_ui` with a json-render spec: a flat map of elements, each restricted to a small component catalog. The host renders that spec in a sandboxed iframe. Buttons in the UI either save data on the server or hand the turn back to Claude, so the UI is part of the agent loop rather than a dead end.
+Claude calls `render_ui` with a json-render spec: a flat map of elements, each restricted to a small component catalog. The host renders that spec in a sandboxed iframe. Buttons call MCP tools on the server directly and never type into the chat. Results flow back into the UI, and Claude sees each call through model context on your next message.
 
 ![Test host showing a rendered form and the host log](docs/test-host.png)
 
@@ -11,9 +11,9 @@ Claude calls `render_ui` with a json-render spec: a flat map of elements, each r
 ```
 Claude ──render_ui({ spec })──▶ MCP server ──validated spec──▶ UI iframe (json-render)
    ▲                                                              │
-   │   ui/message  ("ask" action: a new chat turn)  ◀─────────────┤
-   │   ui/update-model-context (after "submit")     ◀─────────────┤
-   └── list_submissions                  submit_form ◀────────────┘  (tools/call, app-only)
+   │   ui/update-model-context (after every button call) ◀────────┤
+   │                                                              │
+   └── list_submissions        submit_form / callTool ◀───────────┘  (tools/call)
 ```
 
 | Piece | What it does |
@@ -21,7 +21,8 @@ Claude ──render_ui({ spec })──▶ MCP server ──validated spec──�
 | `render_ui` | Tool the model sees. Its input schema comes from the catalog: one variant per component with typed props, plus `on` bindings limited to catalog actions. Invalid specs (unknown component, unknown action, dangling child) return an error so Claude can fix and retry. |
 | UI resource | One-file React bundle with `@json-render/react`. It renders partial tool input as Claude streams it, then the validated result. |
 | `submit` action | Calls the app-only `submit_form` tool directly, with no chat turn, then tells Claude through `ui/update-model-context`. It writes its progress into UI state (`/submitting`, then `/submission = { id, receivedAt }` or `/submissionError`), so the spec can show a confirmation with `visible` conditions. |
-| `ask` action | Posts a message into the chat as the user (`ui/message`), so Claude reacts and can call `render_ui` again. |
+| `callTool` action | Calls any tool on this server (`{ name, arguments, resultPath }`). Progress goes to `/calls/<name>/status`, the result to `resultPath` (default `/result`), and a tool that returns `{ spec }` replaces the UI. Nothing is typed into the chat. |
+| `setState` / `pushState` | json-render's built-in actions, used to move between screens inside one spec. |
 | `list_submissions` | Lets Claude read back what the user saved. |
 
 ![Confirmation card after Save](docs/submit-confirmation.png)
@@ -35,7 +36,7 @@ The server also publishes two MCP prompts. In Claude Desktop, pick them from the
 | Prompt | Argument | What it does |
 | --- | --- | --- |
 | `ui` | `request`: anything | Claude answers that request with `render_ui` rather than prose, with buttons for the next steps. |
-| `no-textbox` | `topic` (optional) | A conversation driven only by buttons. Each choice is an `ask` that hands the turn back, and Claude redraws the next screen with a breadcrumb of your path. Endings get a Save button. |
+| `no-textbox` | `topic` (optional) | Claude draws a whole branching flow in one spec. Buttons move between screens with `setState` and add to a breadcrumb with `pushState`, and endings get a Save button. Nothing is typed into the chat. |
 
 `examples/no-textbox.json` shows the first screen. To preview it in the test host, open `dev/host.html?example=no-textbox`.
 

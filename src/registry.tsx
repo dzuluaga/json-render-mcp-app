@@ -7,8 +7,16 @@ export type SetStateAt = (path: string, value: unknown) => void;
 
 export interface AppActions {
   submit: (params: { form?: Record<string, unknown> | null } | undefined, setStateAt: SetStateAt) => Promise<void>;
-  ask: (params: { message: string; data?: Record<string, unknown> | null } | undefined) => Promise<void>;
+  callTool: (
+    params: { name: string; arguments?: Record<string, unknown> | null; resultPath?: string | null } | undefined,
+    setStateAt: SetStateAt,
+  ) => Promise<void>;
 }
+
+const setAt =
+  (setState: (updater: (prev: Record<string, unknown>) => Record<string, unknown>) => void): SetStateAt =>
+  (path, value) =>
+    setState((prev) => immutableSetByPath(prev, path, value));
 
 /** Component implementations for the catalog; actions are wired to the MCP App bridge. */
 export function createRegistry(actions: AppActions) {
@@ -68,9 +76,8 @@ export function createRegistry(actions: AppActions) {
       ),
     },
     actions: {
-      submit: (params, setState) =>
-        actions.submit(params, (path, value) => setState((prev) => immutableSetByPath(prev, path, value))),
-      ask: (params) => actions.ask(params),
+      submit: (params, setState) => actions.submit(params, setAt(setState)),
+      callTool: (params, setState) => actions.callTool(params, setAt(setState)),
     },
   });
 }
