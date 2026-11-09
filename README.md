@@ -25,21 +25,23 @@ Claude ──render_ui({ spec })──▶ MCP server ──validated spec──�
 | `setState` / `pushState` | json-render's built-in actions, used to move between screens inside one spec. |
 | `list_submissions` | Lets Claude, or a button, read back what the user saved. |
 | `make_qr_code` | Demo tool that returns an image: a QR code PNG as MCP image content plus `{ src }` for an Image. `examples/qr-form.json` wires it to a Generate button. |
-| `fetch_json` | GETs a JSON API on the server, because the UI iframe can't reach the network. HTTPS only, limited to an allowlist (default `api.open-meteo.com`, `geocoding-api.open-meteo.com`, `api.github.com`; set `FETCH_ALLOWED_HOSTS` to change it), no redirects, 10 s timeout, 1 MB cap. `path` (a JSON Pointer) trims the response and `columns` turns it into rows for a Table or Chart. `examples/weather.json` loads a live forecast from a button. |
+| `describe_components` | Full docs per component: props as JSON Schema, events, slots and an example. `render_ui`'s description stays a one-line-per-component index and points here. |
+| `fetch_json` | GETs a JSON API on the server, because the UI iframe can't reach the network. HTTPS only, limited to an allowlist (default `api.open-meteo.com`, `geocoding-api.open-meteo.com`, `api.github.com`; set `FETCH_ALLOWED_HOSTS` to change it), no redirects, 10 s timeout, 1 MB cap. `path` (a JSON Pointer) trims the response and `columns` zips or renames fields into rows; Tables and charts read arrays of objects directly. `examples/weather.json` loads a live forecast from a button. |
 
 ![Confirmation card after Save](docs/submit-confirmation.png)
 
-The catalog (`src/catalog.ts`) currently has Stack, Card, Heading, Text, Badge, Table, Chart, Svg, Image, TextField, Select and Button.
+The catalog (`src/catalog.ts`) reuses existing json-render components instead of hand-built ones:
 
-- **Table:** columns plus rows, which can come from state (for example a `callTool` result).
-- **Chart:** bar, line or pie from `{ label, value }` points, drawn as plain SVG with no chart library.
+- **[@json-render/shadcn](https://www.npmjs.com/package/@json-render/shadcn):** 34 Radix + Tailwind components (Stack, Grid, Card, Tabs, Dialog, Accordion, Alert, Badge, Input, Select, Switch, Slider, ButtonGroup, Button, Tooltip, Popover, Progress and more). `className` is removed from their props, since Tailwind only ships classes it saw at build time.
+- **Metric, Table, BarChart, LineChart, PieChart:** vendored from json-render's [examples/chat](https://github.com/vercel-labs/json-render/tree/main/examples/chat) (Apache-2.0, `src/vendor/`). Recharts with hover tooltips; the Table sorts on header click. All take an array of objects plus field names (`xKey`/`yKey`, `nameKey`/`valueKey`), so `fetch_json` results bind straight in.
 - **Svg:** Claude's own drawings (illustrations, icons, diagrams). The server rejects markup with scripts, event handlers, `foreignObject` or external references, and the UI also runs it through DOMPurify. That second layer matters because partial input streams in before the server validates it.
 
 - **Image:** a raster image from a `data:image/...;base64` URL, usually a tool result. External URLs are rejected.
 
-![Dashboard example](docs/dashboard.png) Inputs bind to state with `{ "$bindState": "/form/name" }`, action params read state with `{ "$state": "/form" }`, and elements can show or hide with `visible` conditions.
+![Weather example with live data and a chart tooltip](docs/shadcn-weather.png)
 
-![Live forecast loaded by a button through fetch_json](docs/fetch-json-weather.png)
+ Inputs bind to state with `{ "$bindState": "/form/name" }`, action params read state with `{ "$state": "/form" }`, and elements can show or hide with `visible` conditions.
+
 
 ## Prompts
 
@@ -104,11 +106,13 @@ npm test         # server tests over an in-memory MCP client
 npm run build    # typecheck, UI bundle, server
 ```
 
-Edit the catalog in `src/catalog.ts` and the matching React components in `src/registry.tsx`. The tool schema and description regenerate from the catalog.
+Edit the catalog in `src/catalog.ts` and the matching React components in `src/registry.tsx`. The tool schema, description and `describe_components` output regenerate from the catalog.
 
 ## Notes
 
 - `catalog.jsonSchema()` and `catalog.validate()` from json-render leave props untyped and drop `on` bindings, so `src/spec-schema.ts` builds a stricter schema from the same catalog.
+- shadcn's Tabs renders every child; panels switch with `value: { "$bindState": "/tab" }` and `visible` conditions (the catalog description says so).
+- recharts 2 needs `react-is` 19 under React 19, hence the `overrides` entry in `package.json`; without it bars render empty.
 - Hosts cache UI resources by URI, so the resource URI includes a hash of the bundle.
 - How partial input streams in, and whether tool calls made from the UI need user confirmation, depends on the host.
 

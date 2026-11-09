@@ -39,17 +39,17 @@
     "crumb": {
       "type": "Badge",
       "props": {
-        "label": {
+        "text": {
           "$item": "label"
         },
-        "tone": "info"
+        "variant": "default"
       }
     },
     "start": {
       "type": "Card",
       "props": {
         "title": "What are we building today?",
-        "subtitle": "No typing. Every button moves you to the next screen."
+        "description": "No typing. Every button moves you to the next screen."
       },
       "children": [
         "choices"
@@ -150,12 +150,12 @@
       }
     },
     "saved": {
-      "type": "Text",
+      "type": "Alert",
       "props": {
-        "text": {
+        "title": {
           "$template": "Saved as submission #${/submission/id}."
         },
-        "tone": "success"
+        "type": "success"
       },
       "visible": {
         "$state": "/submission"
@@ -178,7 +178,7 @@
     "trip-text": {
       "type": "Text",
       "props": {
-        "text": "Day 1 Alfama and fado, day 2 Sintra by train, day 3 Bel\u00e9m and past\u00e9is by the river."
+        "text": "Day 1 Alfama and fado, day 2 Sintra by train, day 3 Belém and pastéis by the river."
       }
     },
     "trip-actions": {

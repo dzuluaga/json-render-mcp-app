@@ -10,7 +10,7 @@ import path from "node:path";
 import QRCode from "qrcode";
 import { z } from "zod";
 import { allowedHosts, fetchJson, FetchJsonError } from "./src/fetch-json.js";
-import { describeCatalog, normalizeSpec, UISpec } from "./src/spec-schema.js";
+import { componentDocs, describeCatalog, normalizeSpec, UISpec } from "./src/spec-schema.js";
 
 // Resolve the bundled UI from both source (server.ts via tsx) and compiled (dist/server.js).
 const DIST_DIR = import.meta.filename.endsWith(".ts")
@@ -61,7 +61,7 @@ Shows the user an interactive UI, described as a json-render spec: a flat map of
 
 ${describeCatalog()}
 
-Bind inputs to state with { "$bindState": "/path" } and read state with { "$state": "/path" }; seed it with spec.state. Build strings with { "$template": "Hi \${/form/name}" }. To list items, give a Stack repeat: { "statePath": "/items" } and read each item in its children with { "$item": "field" }. Buttons never type into the chat. Use "submit" for data the server should keep, "callTool" to run a tool on this server (list_submissions returns { submissions, count }; make_qr_code { text, color?: "#rrggbb", size? } returns { src } for an Image; fetch_json { url, path?, columns?, limit? } returns { data } from an allowed JSON API, and with columns the data is rows ready for a Table or a Chart of { label, value }), and setState / pushState for navigation inside the UI (show screens with visible: { "$state": "/step", "eq": "..." }). Calling render_ui again replaces the UI.`,
+Bind inputs to state with { "$bindState": "/path" } and read state with { "$state": "/path" }; seed it with spec.state. Build strings with { "$template": "Hi \${/form/name}" }. To list items, give a Stack repeat: { "statePath": "/items" } and read each item in its children with { "$item": "field" }. Buttons never type into the chat. Use "submit" for data the server should keep, "callTool" to run a tool on this server (list_submissions returns { submissions, count }; make_qr_code { text, color?: "#rrggbb", size? } returns { src } for an Image; fetch_json { url, path?, columns?, limit? } returns { data } from an allowed JSON API: bind a Table or chart's data to { "$state": "<resultPath>/data" } and pick fields with xKey/yKey), and setState / pushState for navigation inside the UI (show screens with visible: { "$state": "/step", "eq": "..." }). Calling render_ui again replaces the UI.`,
       inputSchema: z.object({ spec: UISpec }),
       _meta: { ui: { resourceUri: RESOURCE_URI } },
     },
@@ -134,7 +134,7 @@ Bind inputs to state with { "$bindState": "/path" } and read state with { "$stat
     "fetch_json",
     {
       title: "Fetch JSON",
-      description: `GETs a JSON API on the server, since the UI itself can't reach the network. Allowed hosts: ${hosts.join(", ")}. Returns { url, status, data }. Trim big responses: path is a JSON Pointer into the response (e.g. "/daily"); columns turns the selected value into rows ({ outKey: source }, where source is a field of each item in an array of objects, or the key of one array in an object of parallel arrays). For a Chart use columns { "label": ..., "value": ... }. Buttons call it with callTool and read the result from resultPath, e.g. rows: { "$state": "/forecast/data" }. Build URLs from state with { "$template": "https://...?q=\${/form/q}" }.`,
+      description: `GETs a JSON API on the server, since the UI itself can't reach the network. Allowed hosts: ${hosts.join(", ")}. Returns { url, status, data }. Trim big responses: path is a JSON Pointer into the response (e.g. "/daily"); columns turns the selected value into rows ({ outKey: source }, where source is a field of each item in an array of objects, or the key of one array in an object of parallel arrays). Charts and Tables read arrays of objects directly (xKey/yKey pick the fields), so columns is only needed to zip parallel arrays (e.g. Open-Meteo's daily.time + daily.temperature_2m_max) or rename fields. Buttons call it with callTool and read the result from resultPath, e.g. data: { "$state": "/forecast/data" }. Build URLs from state with { "$template": "https://...?q=\${/form/q}" }.`,
       inputSchema: z.object({
         url: z.string().describe(`https URL on one of: ${hosts.join(", ")}`),
         path: z.string().optional().describe('JSON Pointer to the part of the response to return, e.g. "/daily"'),
@@ -158,6 +158,22 @@ Bind inputs to state with { "$bindState": "/path" } and read state with { "$stat
         if (!(e instanceof FetchJsonError)) throw e;
         return { isError: true, content: [{ type: "text", text: e.message }] };
       }
+    },
+  );
+
+  server.registerTool(
+    "describe_components",
+    {
+      title: "Describe UI components",
+      description:
+        "Docs for render_ui's components: each one's props (JSON Schema), events it can fire, slots and an example element. Call it before using a component you haven't used yet, or when a render_ui call fails validation.",
+      inputSchema: z.object({
+        names: z.array(z.string()).optional().describe("Component names, e.g. [\"BarChart\", \"Tabs\"]; omit for all"),
+      }),
+    },
+    async ({ names }): Promise<CallToolResult> => {
+      const docs = componentDocs(names);
+      return { content: [{ type: "text", text: JSON.stringify(docs, null, 2) }], structuredContent: docs };
     },
   );
 

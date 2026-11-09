@@ -1,66 +1,47 @@
 import { defineCatalog } from "@json-render/core";
 import { schema } from "@json-render/react/schema";
+import { shadcnComponentDefinitions } from "@json-render/shadcn/catalog";
 import { z } from "zod";
+import { dataComponentDefinitions } from "./vendor/data-catalog.js";
+
+// shadcn's Table takes rows as string[][] and its Image loads any URL; the
+// vendored data components and our data:-only Image replace them.
+const { Table: _table, Image: _image, ...shadcn } = shadcnComponentDefinitions;
+
+// Notes the stock descriptions leave out, learned by rendering them.
+const notes: Record<string, string> = {
+  Tabs: 'Tab bar only: all children always render. Bind value to state and show one child per tab, e.g. value: { "$bindState": "/tab" } and on each panel visible: { "$state": "/tab", "eq": "chart" }. Seed /tab in spec.state.',
+  ButtonGroup: "Segmented single choice with no label of its own; put a Text (variant caption) above it.",
+};
+
+// Tailwind only ships classes it saw at build time, so a className the model
+// invents would do nothing. Keep the prop out of the schema.
+const shadcnComponents = Object.fromEntries(
+  Object.entries(shadcn).map(([name, def]) => {
+    const props = def.props as z.ZodObject;
+    return [
+      name,
+      {
+        ...def,
+        props: "className" in props.shape ? props.omit({ className: true }) : props,
+        description: notes[name] ? `${def.description} ${notes[name]}` : def.description,
+      },
+    ];
+  }),
+) as { [K in keyof typeof shadcn]: (typeof shadcn)[K] };
 
 /**
  * The components and actions Claude may use in a `render_ui` spec.
  * Shared by the server (input schema + validation) and the UI (registry).
+ *
+ * - Layout, content, inputs and overlays: @json-render/shadcn (Radix + Tailwind).
+ * - Metric, Table and Bar/Line/Pie charts: vendored from json-render's examples/chat (Recharts).
+ * - Svg and Image: ours, sanitized / data:-URL only.
  */
 export const catalog = defineCatalog(schema, {
   components: {
-    Stack: {
-      props: z.object({
-        direction: z.enum(["vertical", "horizontal"]).nullable(),
-        gap: z.enum(["sm", "md", "lg"]).nullable(),
-      }),
-      description: "Layout container that stacks its children vertically (default) or horizontally.",
-    },
-    Card: {
-      props: z.object({
-        title: z.string().nullable(),
-        subtitle: z.string().nullable(),
-      }),
-      description: "Bordered container with an optional title and subtitle.",
-    },
-    Heading: {
-      props: z.object({
-        text: z.string(),
-        level: z.enum(["1", "2", "3"]).nullable(),
-      }),
-      description: "A heading.",
-    },
-    Text: {
-      props: z.object({
-        text: z.string(),
-        tone: z.enum(["default", "muted", "success", "danger"]).nullable(),
-      }),
-      description: "A paragraph of text.",
-    },
-    Badge: {
-      props: z.object({
-        label: z.string(),
-        tone: z.enum(["neutral", "info", "success", "warning", "danger"]).nullable(),
-      }),
-      description: "A small status pill.",
-    },
-    Table: {
-      props: z.object({
-        columns: z.array(z.object({ key: z.string(), label: z.string() })),
-        rows: z.array(z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()]))),
-        caption: z.string().nullable(),
-      }),
-      description:
-        'Data table. Each row is an object keyed by column key. Rows can come from state, e.g. rows: { "$state": "/saved/submissions" }.',
-    },
-    Chart: {
-      props: z.object({
-        kind: z.enum(["bar", "line", "pie"]),
-        title: z.string().nullable(),
-        data: z.array(z.object({ label: z.string(), value: z.number() })),
-        unit: z.string().nullable(),
-      }),
-      description: "Bar, line or pie chart from { label, value } points. unit is appended to values (e.g. \"$\", \"%\", \"h\").",
-    },
+    ...shadcnComponents,
+    ...dataComponentDefinitions,
     Svg: {
       props: z.object({
         svg: z.string(),
@@ -68,7 +49,7 @@ export const catalog = defineCatalog(schema, {
         maxWidth: z.number().nullable(),
       }),
       description:
-        "An inline drawing: a complete <svg>…</svg> with a viewBox. Use it for illustrations, icons, diagrams and maps. No scripts, event handlers, <foreignObject> or external links/images (they're stripped). Use currentColor to follow the host theme.",
+        "An inline drawing: a complete <svg>…</svg> with a viewBox. Use it for illustrations, icons, diagrams and maps. No scripts, event handlers, <foreignObject> or external links/images (they're stripped). Use currentColor to follow the host theme. Static: it can't redraw from state, so use the charts for data.",
     },
     Image: {
       props: z.object({
@@ -78,31 +59,6 @@ export const catalog = defineCatalog(schema, {
       }),
       description:
         'A raster image from a data: URL (data:image/png|jpeg|gif|webp;base64,...), usually a tool result, e.g. src: { "$state": "/qr/src" }. External URLs are not allowed.',
-    },
-    TextField: {
-      props: z.object({
-        label: z.string(),
-        value: z.string().nullable(),
-        placeholder: z.string().nullable(),
-      }),
-      description:
-        'Single-line text input. Bind it to state with value: { "$bindState": "/form/name" }.',
-    },
-    Select: {
-      props: z.object({
-        label: z.string(),
-        value: z.string().nullable(),
-        options: z.array(z.object({ value: z.string(), label: z.string() })),
-      }),
-      description: 'Dropdown. Bind it to state with value: { "$bindState": "/form/plan" }.',
-    },
-    Button: {
-      props: z.object({
-        label: z.string(),
-        variant: z.enum(["primary", "secondary"]).nullable(),
-      }),
-      description:
-        'Clickable button. Fires the "press" event; bind it with on: { "press": { "action": "...", "params": { ... } } }.',
     },
   },
   actions: {

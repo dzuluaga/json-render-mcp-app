@@ -1,12 +1,13 @@
 /// <reference types="vitest/config" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import { viteSingleFile } from "vite-plugin-singlefile";
 
 // The UI ships as one self-contained HTML file served as the MCP App resource.
 // `npm run dev` serves dev/host.html, a local test host, proxying /mcp to the server.
 export default defineConfig({
-  plugins: [react(), viteSingleFile()],
+  plugins: [react(), tailwindcss(), viteSingleFile()],
   server: {
     open: "/dev/host.html",
     proxy: { "/mcp": "http://localhost:3001" },

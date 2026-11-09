@@ -103,13 +103,44 @@ export function normalizeSpec<T extends { elements: Record<string, { children?: 
   return { ...spec, elements };
 }
 
+type ComponentDef = {
+  props: z.ZodObject;
+  description: string;
+  events?: string[];
+  slots?: string[];
+  example?: unknown;
+};
+
+const components = catalog.data.components as unknown as Record<string, ComponentDef>;
+
 /** One line per component and action, for the render_ui tool description. */
 export function describeCatalog(): string {
-  const components = Object.entries(catalog.data.components)
-    .map(([name, def]) => `- ${name}: ${def.description}`)
+  const lines = Object.entries(components)
+    .map(([name, def]) => `- ${name}: ${def.description}${def.events?.length ? ` Events: ${def.events.join(", ")}.` : ""}`)
     .join("\n");
   const actions = Object.entries(catalog.data.actions ?? {})
     .map(([name, def]) => `- ${name}: ${def.description}`)
     .join("\n");
-  return `Components:\n${components}\n\nActions (for "on" bindings):\n${actions}\n- setState / pushState / removeState: built-in client-side state updates, params { "statePath": "/path", "value": ... }`;
+  return `Components (call describe_components for exact props, events and an example of each):\n${lines}\n\nActions (for "on" bindings):\n${actions}\n- setState / pushState / removeState: built-in client-side state updates, params { "statePath": "/path", "value": ... }`;
+}
+
+/** Full docs for describe_components: props as JSON Schema, events, slots and an example element. */
+export function componentDocs(names?: string[]) {
+  const wanted = names?.length ? names : Object.keys(components);
+  const unknown = wanted.filter((n) => !(n in components));
+  const docs = wanted
+    .filter((n) => n in components)
+    .map((name) => {
+      const def = components[name];
+      const { $schema: _, ...props } = z.toJSONSchema(def.props) as Record<string, unknown>;
+      return {
+        name,
+        description: def.description,
+        props,
+        ...(def.events?.length ? { events: def.events } : {}),
+        ...(def.slots?.length ? { slots: def.slots } : {}),
+        ...(def.example ? { example: { type: name, props: def.example } } : {}),
+      };
+    });
+  return { components: docs, ...(unknown.length ? { unknown, available: Object.keys(components) } : {}) };
 }

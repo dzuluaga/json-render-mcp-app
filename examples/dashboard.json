@@ -16,7 +16,7 @@
       "type": "Card",
       "props": {
         "title": "Your week",
-        "subtitle": "Nov 2 \u2013 Nov 8"
+        "description": "Nov 2 – Nov 8"
       },
       "children": [
         "art"
@@ -31,30 +31,19 @@
       }
     },
     "charts": {
-      "type": "Stack",
-      "props": {
-        "direction": "horizontal",
-        "gap": "md"
-      },
-      "children": [
-        "focus",
-        "split",
-        "steps"
-      ]
-    },
-    "focus": {
       "type": "Card",
       "props": {},
       "children": [
-        "focusChart"
+        "chartTabs",
+        "focusChart",
+        "splitChart",
+        "stepsChart"
       ]
     },
     "focusChart": {
-      "type": "Chart",
+      "type": "BarChart",
       "props": {
-        "kind": "bar",
-        "title": "Focus hours",
-        "unit": "h",
+        "title": "Focus hours (h)",
         "data": [
           {
             "label": "Mon",
@@ -76,22 +65,19 @@
             "label": "Fri",
             "value": 2
           }
-        ]
+        ],
+        "xKey": "label",
+        "yKey": "value"
+      },
+      "visible": {
+        "$state": "/tab",
+        "eq": "focus"
       }
     },
-    "split": {
-      "type": "Card",
-      "props": {},
-      "children": [
-        "splitChart"
-      ]
-    },
     "splitChart": {
-      "type": "Chart",
+      "type": "PieChart",
       "props": {
-        "kind": "pie",
-        "title": "Where the time went",
-        "unit": "h",
+        "title": "Where the time went (h)",
         "data": [
           {
             "label": "Building",
@@ -109,22 +95,19 @@
             "label": "Email",
             "value": 4
           }
-        ]
+        ],
+        "nameKey": "label",
+        "valueKey": "value"
+      },
+      "visible": {
+        "$state": "/tab",
+        "eq": "split"
       }
     },
-    "steps": {
-      "type": "Card",
-      "props": {},
-      "children": [
-        "stepsChart"
-      ]
-    },
     "stepsChart": {
-      "type": "Chart",
+      "type": "LineChart",
       "props": {
-        "kind": "line",
         "title": "Steps (thousands)",
-        "unit": "k",
         "data": [
           {
             "label": "Mon",
@@ -154,7 +137,13 @@
             "label": "Sun",
             "value": 10.1
           }
-        ]
+        ],
+        "xKey": "label",
+        "yKey": "value"
+      },
+      "visible": {
+        "$state": "/tab",
+        "eq": "steps"
       }
     },
     "tasks": {
@@ -169,7 +158,6 @@
     "taskTable": {
       "type": "Table",
       "props": {
-        "caption": null,
         "columns": [
           {
             "key": "task",
@@ -184,7 +172,7 @@
             "label": "Hours"
           }
         ],
-        "rows": [
+        "data": [
           {
             "task": "Onboarding flow",
             "owner": "Ada",
@@ -202,6 +190,31 @@
           }
         ]
       }
+    },
+    "chartTabs": {
+      "type": "Tabs",
+      "props": {
+        "tabs": [
+          {
+            "label": "Focus",
+            "value": "focus"
+          },
+          {
+            "label": "Time split",
+            "value": "split"
+          },
+          {
+            "label": "Steps",
+            "value": "steps"
+          }
+        ],
+        "value": {
+          "$bindState": "/tab"
+        }
+      }
     }
+  },
+  "state": {
+    "tab": "focus"
   }
 }

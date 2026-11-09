@@ -19,10 +19,11 @@
       "type": "Card",
       "props": {
         "title": "Start your trial",
-        "subtitle": "Rendered by json-render inside an MCP App"
+        "description": "Rendered by json-render inside an MCP App"
       },
       "children": [
         "name",
+        "planLabel",
         "plan",
         "badge",
         "actions",
@@ -37,23 +38,21 @@
       }
     },
     "name": {
-      "type": "TextField",
+      "type": "Input",
       "props": {
         "label": "Name",
+        "name": "name",
+        "type": "text",
+        "placeholder": "Ada Lovelace",
         "value": {
           "$bindState": "/form/name"
-        },
-        "placeholder": "Ada Lovelace"
+        }
       }
     },
     "plan": {
-      "type": "Select",
+      "type": "ButtonGroup",
       "props": {
-        "label": "Plan",
-        "value": {
-          "$bindState": "/form/plan"
-        },
-        "options": [
+        "buttons": [
           {
             "value": "free",
             "label": "Free"
@@ -66,14 +65,17 @@
             "value": "team",
             "label": "Team"
           }
-        ]
+        ],
+        "selected": {
+          "$bindState": "/form/plan"
+        }
       }
     },
     "badge": {
       "type": "Badge",
       "props": {
-        "label": "Pro selected: priority support included",
-        "tone": "success"
+        "text": "Pro selected: priority support included",
+        "variant": "default"
       },
       "visible": {
         "$state": "/form/plan",
@@ -111,20 +113,20 @@
     "saving": {
       "type": "Text",
       "props": {
-        "text": "Saving\u2026",
-        "tone": "muted"
+        "text": "Saving…",
+        "variant": "muted"
       },
       "visible": {
         "$state": "/submitting"
       }
     },
     "error": {
-      "type": "Text",
+      "type": "Alert",
       "props": {
-        "text": {
+        "title": {
           "$template": "Couldn't save: ${/submissionError}"
         },
-        "tone": "danger"
+        "type": "error"
       },
       "visible": {
         "$state": "/submissionError"
@@ -134,7 +136,7 @@
       "type": "Card",
       "props": {
         "title": "You're all set",
-        "subtitle": {
+        "description": {
           "$template": "Saved as submission #${/submission/id}"
         }
       },
@@ -189,8 +191,8 @@
     "loading": {
       "type": "Text",
       "props": {
-        "text": "Loading\u2026",
-        "tone": "muted"
+        "text": "Loading…",
+        "variant": "muted"
       },
       "visible": {
         "$state": "/calls/list_submissions/status",
@@ -203,10 +205,17 @@
         "text": {
           "$template": "You have ${/saved/count} saved plan(s)."
         },
-        "tone": "muted"
+        "variant": "muted"
       },
       "visible": {
         "$state": "/saved"
+      }
+    },
+    "planLabel": {
+      "type": "Text",
+      "props": {
+        "text": "Plan",
+        "variant": "caption"
       }
     }
   }

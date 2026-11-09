@@ -21,11 +21,9 @@ const planPicker = {
       type: "Select",
       props: {
         label: "Plan",
+        name: "plan",
         value: { $bindState: "/form/plan" },
-        options: [
-          { value: "free", label: "Free" },
-          { value: "pro", label: "Pro" },
-        ],
+        options: ["free", "pro"],
       },
     },
     go: {
@@ -145,5 +143,46 @@ describe("fetch_json tool", () => {
     const result = await client.callTool({ name: "fetch_json", arguments: { url: "https://evil.example.com/x.json" } });
     expect(result.isError).toBe(true);
     expect(JSON.stringify(result.content)).toContain("not allowed");
+  });
+});
+
+describe("component catalog", () => {
+  it("describe_components returns props, events and examples, and flags unknown names", async () => {
+    const client = await connect();
+    const result = await client.callTool({ name: "describe_components", arguments: { names: ["BarChart", "Button", "Nope"] } });
+    const docs = result.structuredContent as {
+      components: { name: string; props: { properties: Record<string, unknown> }; events?: string[]; example?: unknown }[];
+      unknown?: string[];
+    };
+    const [bar, button] = docs.components;
+    expect(bar.name).toBe("BarChart");
+    expect(Object.keys(bar.props.properties)).toEqual(expect.arrayContaining(["data", "xKey", "yKey", "aggregate"]));
+    expect(bar.example).toMatchObject({ type: "BarChart" });
+    expect(button.events).toEqual(["press"]);
+    expect(docs.unknown).toEqual(["Nope"]);
+  });
+
+  it("accepts shadcn and chart components together and rejects className", async () => {
+    const client = await connect();
+    const spec = {
+      root: "tabs",
+      state: { rows: [{ day: "Mon", high: 18 }, { day: "Tue", high: 21 }] },
+      elements: {
+        tabs: {
+          type: "Tabs",
+          props: { tabs: [{ label: "Chart", value: "chart" }, { label: "Table", value: "table" }] },
+          children: ["chart", "table"],
+        },
+        chart: { type: "BarChart", props: { data: { $state: "/rows" }, xKey: "day", yKey: "high" } },
+        table: { type: "Table", props: { data: { $state: "/rows" }, columns: [{ key: "day", label: "Day" }] } },
+      },
+    };
+    const ok = await client.callTool({ name: "render_ui", arguments: { spec } });
+    expect(ok.isError, JSON.stringify(ok.content)).toBeFalsy();
+
+    const styled = { ...spec, elements: { ...spec.elements, tabs: { ...spec.elements.tabs, type: "Card", props: { className: "p-8" } } } };
+    const bad = await client.callTool({ name: "render_ui", arguments: { spec: styled } });
+    expect(bad.isError).toBe(true);
+    expect(JSON.stringify(bad.content)).toContain("className");
   });
 });
