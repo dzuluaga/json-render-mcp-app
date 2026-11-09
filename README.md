@@ -25,6 +25,7 @@ Claude ──render_ui({ spec })──▶ MCP server ──validated spec──�
 | `setState` / `pushState` | json-render's built-in actions, used to move between screens inside one spec. |
 | `list_submissions` | Lets Claude, or a button, read back what the user saved. |
 | `make_qr_code` | Demo tool that returns an image: a QR code PNG as MCP image content plus `{ src }` for an Image. `examples/qr-form.json` wires it to a Generate button. |
+| `fetch_json` | GETs a JSON API on the server, because the UI iframe can't reach the network. HTTPS only, limited to an allowlist (default `api.open-meteo.com`, `geocoding-api.open-meteo.com`, `api.github.com`; set `FETCH_ALLOWED_HOSTS` to change it), no redirects, 10 s timeout, 1 MB cap. `path` (a JSON Pointer) trims the response and `columns` turns it into rows for a Table or Chart. `examples/weather.json` loads a live forecast from a button. |
 
 ![Confirmation card after Save](docs/submit-confirmation.png)
 
@@ -37,6 +38,8 @@ The catalog (`src/catalog.ts`) currently has Stack, Card, Heading, Text, Badge, 
 - **Image:** a raster image from a `data:image/...;base64` URL, usually a tool result. External URLs are rejected.
 
 ![Dashboard example](docs/dashboard.png) Inputs bind to state with `{ "$bindState": "/form/name" }`, action params read state with `{ "$state": "/form" }`, and elements can show or hide with `visible` conditions.
+
+![Live forecast loaded by a button through fetch_json](docs/fetch-json-weather.png)
 
 ## Prompts
 
@@ -92,7 +95,7 @@ npm start      # terminal 1: MCP server on :3001
 npm run dev    # terminal 2: opens dev/host.html
 ```
 
-`dev/host.html` is a minimal MCP Apps host built on `AppBridge`. It loads the UI resource from the server, streams `examples/plan-picker.json` in as partial tool input, and logs every `ui/message`, `ui/update-model-context` and tool call the UI makes.
+`dev/host.html` is a minimal MCP Apps host built on `AppBridge`. It loads the UI resource from the server, streams `examples/plan-picker.json` in (pick another with `?example=weather`, `qr-form`, …) as partial tool input, and logs every `ui/message`, `ui/update-model-context` and tool call the UI makes.
 
 ## Develop
 

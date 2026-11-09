@@ -10,5 +10,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["server.ts", "main.ts", "src/catalog.ts", "src/spec-schema.ts"]
+  "include": ["server.ts", "main.ts", "src/catalog.ts", "src/spec-schema.ts", "src/fetch-json.ts"]
 }

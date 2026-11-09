@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { viteSingleFile } from "vite-plugin-singlefile";
@@ -15,4 +16,6 @@ export default defineConfig({
     outDir: "dist",
     emptyOutDir: false,
   },
+  // Session worktrees under .claude/ hold other copies of the tests.
+  test: { exclude: ["**/node_modules/**", ".claude/**"] },
 });

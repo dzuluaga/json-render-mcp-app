@@ -135,3 +135,15 @@ describe("json-render MCP app server", () => {
     expect(result.structuredContent).toMatchObject({ count: 1 });
   });
 });
+
+describe("fetch_json tool", () => {
+  it("is visible to the model and the UI, and returns an error result for a blocked host", async () => {
+    const client = await connect();
+    const { tools } = await client.listTools();
+    const tool = tools.find((t) => t.name === "fetch_json")!;
+    expect(tool.description).toContain("api.open-meteo.com");
+    const result = await client.callTool({ name: "fetch_json", arguments: { url: "https://evil.example.com/x.json" } });
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result.content)).toContain("not allowed");
+  });
+});
