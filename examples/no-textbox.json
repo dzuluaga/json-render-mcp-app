@@ -1,0 +1,423 @@
+{
+  "root": "page",
+  "state": {
+    "step": "start",
+    "trail": [
+      {
+        "label": "Start"
+      }
+    ]
+  },
+  "elements": {
+    "page": {
+      "type": "Stack",
+      "props": {
+        "gap": "md"
+      },
+      "children": [
+        "trail",
+        "start",
+        "trip",
+        "product",
+        "story",
+        "saved"
+      ]
+    },
+    "trail": {
+      "type": "Stack",
+      "props": {
+        "direction": "horizontal",
+        "gap": "sm"
+      },
+      "repeat": {
+        "statePath": "/trail"
+      },
+      "children": [
+        "crumb"
+      ]
+    },
+    "crumb": {
+      "type": "Badge",
+      "props": {
+        "label": {
+          "$item": "label"
+        },
+        "tone": "info"
+      }
+    },
+    "start": {
+      "type": "Card",
+      "props": {
+        "title": "What are we building today?",
+        "subtitle": "No typing. Every button moves you to the next screen."
+      },
+      "children": [
+        "choices"
+      ],
+      "visible": {
+        "$state": "/step",
+        "eq": "start"
+      }
+    },
+    "choices": {
+      "type": "Stack",
+      "props": {
+        "direction": "horizontal",
+        "gap": "sm"
+      },
+      "children": [
+        "go-trip",
+        "go-product",
+        "go-story"
+      ]
+    },
+    "go-trip": {
+      "type": "Button",
+      "props": {
+        "label": "A trip"
+      },
+      "on": {
+        "press": [
+          {
+            "action": "setState",
+            "params": {
+              "statePath": "/step",
+              "value": "trip"
+            }
+          },
+          {
+            "action": "pushState",
+            "params": {
+              "statePath": "/trail",
+              "value": {
+                "label": "A trip"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "go-product": {
+      "type": "Button",
+      "props": {
+        "label": "A product"
+      },
+      "on": {
+        "press": [
+          {
+            "action": "setState",
+            "params": {
+              "statePath": "/step",
+              "value": "product"
+            }
+          },
+          {
+            "action": "pushState",
+            "params": {
+              "statePath": "/trail",
+              "value": {
+                "label": "A product"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "go-story": {
+      "type": "Button",
+      "props": {
+        "label": "A story"
+      },
+      "on": {
+        "press": [
+          {
+            "action": "setState",
+            "params": {
+              "statePath": "/step",
+              "value": "story"
+            }
+          },
+          {
+            "action": "pushState",
+            "params": {
+              "statePath": "/trail",
+              "value": {
+                "label": "A story"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "saved": {
+      "type": "Text",
+      "props": {
+        "text": {
+          "$template": "Saved as submission #${/submission/id}."
+        },
+        "tone": "success"
+      },
+      "visible": {
+        "$state": "/submission"
+      }
+    },
+    "trip": {
+      "type": "Card",
+      "props": {
+        "title": "Three days in Lisbon"
+      },
+      "children": [
+        "trip-text",
+        "trip-actions"
+      ],
+      "visible": {
+        "$state": "/step",
+        "eq": "trip"
+      }
+    },
+    "trip-text": {
+      "type": "Text",
+      "props": {
+        "text": "Day 1 Alfama and fado, day 2 Sintra by train, day 3 Bel\u00e9m and past\u00e9is by the river."
+      }
+    },
+    "trip-actions": {
+      "type": "Stack",
+      "props": {
+        "direction": "horizontal",
+        "gap": "sm"
+      },
+      "children": [
+        "trip-save",
+        "restart-trip"
+      ]
+    },
+    "trip-save": {
+      "type": "Button",
+      "props": {
+        "label": "Save"
+      },
+      "on": {
+        "press": {
+          "action": "submit",
+          "params": {
+            "form": {
+              "trail": {
+                "$state": "/trail"
+              },
+              "result": "Three days in Lisbon"
+            }
+          }
+        }
+      }
+    },
+    "restart-trip": {
+      "type": "Button",
+      "props": {
+        "label": "Start over",
+        "variant": "secondary"
+      },
+      "on": {
+        "press": [
+          {
+            "action": "setState",
+            "params": {
+              "statePath": "/step",
+              "value": "start"
+            }
+          },
+          {
+            "action": "setState",
+            "params": {
+              "statePath": "/trail",
+              "value": [
+                {
+                  "label": "Start"
+                }
+              ]
+            }
+          },
+          {
+            "action": "setState",
+            "params": {
+              "statePath": "/submission",
+              "value": null
+            }
+          }
+        ]
+      }
+    },
+    "product": {
+      "type": "Card",
+      "props": {
+        "title": "A habit-tracking watch face"
+      },
+      "children": [
+        "product-text",
+        "product-actions"
+      ],
+      "visible": {
+        "$state": "/step",
+        "eq": "product"
+      }
+    },
+    "product-text": {
+      "type": "Text",
+      "props": {
+        "text": "One ring per habit; tap to log, long-press to see the streak."
+      }
+    },
+    "product-actions": {
+      "type": "Stack",
+      "props": {
+        "direction": "horizontal",
+        "gap": "sm"
+      },
+      "children": [
+        "product-save",
+        "restart-product"
+      ]
+    },
+    "product-save": {
+      "type": "Button",
+      "props": {
+        "label": "Save"
+      },
+      "on": {
+        "press": {
+          "action": "submit",
+          "params": {
+            "form": {
+              "trail": {
+                "$state": "/trail"
+              },
+              "result": "A habit-tracking watch face"
+            }
+          }
+        }
+      }
+    },
+    "restart-product": {
+      "type": "Button",
+      "props": {
+        "label": "Start over",
+        "variant": "secondary"
+      },
+      "on": {
+        "press": [
+          {
+            "action": "setState",
+            "params": {
+              "statePath": "/step",
+              "value": "start"
+            }
+          },
+          {
+            "action": "setState",
+            "params": {
+              "statePath": "/trail",
+              "value": [
+                {
+                  "label": "Start"
+                }
+              ]
+            }
+          },
+          {
+            "action": "setState",
+            "params": {
+              "statePath": "/submission",
+              "value": null
+            }
+          }
+        ]
+      }
+    },
+    "story": {
+      "type": "Card",
+      "props": {
+        "title": "The lighthouse that kept the wrong time"
+      },
+      "children": [
+        "story-text",
+        "story-actions"
+      ],
+      "visible": {
+        "$state": "/step",
+        "eq": "story"
+      }
+    },
+    "story-text": {
+      "type": "Text",
+      "props": {
+        "text": "A keeper notices the light flashes a minute late, and so do the ships that wreck."
+      }
+    },
+    "story-actions": {
+      "type": "Stack",
+      "props": {
+        "direction": "horizontal",
+        "gap": "sm"
+      },
+      "children": [
+        "story-save",
+        "restart-story"
+      ]
+    },
+    "story-save": {
+      "type": "Button",
+      "props": {
+        "label": "Save"
+      },
+      "on": {
+        "press": {
+          "action": "submit",
+          "params": {
+            "form": {
+              "trail": {
+                "$state": "/trail"
+              },
+              "result": "The lighthouse that kept the wrong time"
+            }
+          }
+        }
+      }
+    },
+    "restart-story": {
+      "type": "Button",
+      "props": {
+        "label": "Start over",
+        "variant": "secondary"
+      },
+      "on": {
+        "press": [
+          {
+            "action": "setState",
+            "params": {
+              "statePath": "/step",
+              "value": "start"
+            }
+          },
+          {
+            "action": "setState",
+            "params": {
+              "statePath": "/trail",
+              "value": [
+                {
+                  "label": "Start"
+                }
+              ]
+            }
+          },
+          {
+            "action": "setState",
+            "params": {
+              "statePath": "/submission",
+              "value": null
+            }
+          }
+        ]
+      }
+    }
+  }
+}

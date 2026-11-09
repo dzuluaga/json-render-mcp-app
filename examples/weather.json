@@ -1,0 +1,67 @@
+{
+  "root": "card",
+  "state": { "form": { "city": "latitude=37.77&longitude=-122.42" } },
+  "elements": {
+    "card": {
+      "type": "Card",
+      "props": { "title": "7-day forecast", "subtitle": "Live from Open-Meteo, fetched by the MCP server" },
+      "children": ["city", "load", "loading", "error", "chart", "table"]
+    },
+    "city": {
+      "type": "Select",
+      "props": {
+        "label": "City",
+        "value": { "$bindState": "/form/city" },
+        "options": [
+          { "value": "latitude=37.77&longitude=-122.42", "label": "San Francisco" },
+          { "value": "latitude=40.71&longitude=-74.01", "label": "New York" },
+          { "value": "latitude=51.51&longitude=-0.13", "label": "London" }
+        ]
+      }
+    },
+    "load": {
+      "type": "Button",
+      "props": { "label": "Load forecast" },
+      "on": {
+        "press": {
+          "action": "callTool",
+          "params": {
+            "name": "fetch_json",
+            "arguments": {
+              "url": { "$template": "https://api.open-meteo.com/v1/forecast?${/form/city}&daily=temperature_2m_max&timezone=auto" },
+              "path": "/daily",
+              "columns": { "label": "time", "value": "temperature_2m_max" }
+            },
+            "resultPath": "/forecast"
+          }
+        }
+      }
+    },
+    "loading": {
+      "type": "Text",
+      "props": { "text": "Loading…", "tone": "muted" },
+      "visible": { "$state": "/calls/fetch_json/status", "eq": "pending" }
+    },
+    "error": {
+      "type": "Text",
+      "props": { "text": { "$template": "Couldn't load: ${/calls/fetch_json/error}" }, "tone": "danger" },
+      "visible": { "$state": "/calls/fetch_json/status", "eq": "error" }
+    },
+    "chart": {
+      "type": "Chart",
+      "props": { "kind": "bar", "title": "Daily high", "data": { "$state": "/forecast/data" }, "unit": "°C" },
+      "visible": { "$state": "/forecast" }
+    },
+    "table": {
+      "type": "Table",
+      "props": {
+        "columns": [
+          { "key": "label", "label": "Day" },
+          { "key": "value", "label": "High (°C)" }
+        ],
+        "rows": { "$state": "/forecast/data" }
+      },
+      "visible": { "$state": "/forecast" }
+    }
+  }
+}

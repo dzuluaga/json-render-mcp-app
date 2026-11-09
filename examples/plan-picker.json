@@ -1,0 +1,213 @@
+{
+  "root": "page",
+  "state": {
+    "form": {
+      "name": "",
+      "plan": ""
+    }
+  },
+  "elements": {
+    "page": {
+      "type": "Stack",
+      "props": {},
+      "children": [
+        "card",
+        "done"
+      ]
+    },
+    "card": {
+      "type": "Card",
+      "props": {
+        "title": "Start your trial",
+        "subtitle": "Rendered by json-render inside an MCP App"
+      },
+      "children": [
+        "name",
+        "plan",
+        "badge",
+        "actions",
+        "saving",
+        "error",
+        "loading",
+        "savedCount"
+      ],
+      "visible": {
+        "$state": "/submission",
+        "not": true
+      }
+    },
+    "name": {
+      "type": "TextField",
+      "props": {
+        "label": "Name",
+        "value": {
+          "$bindState": "/form/name"
+        },
+        "placeholder": "Ada Lovelace"
+      }
+    },
+    "plan": {
+      "type": "Select",
+      "props": {
+        "label": "Plan",
+        "value": {
+          "$bindState": "/form/plan"
+        },
+        "options": [
+          {
+            "value": "free",
+            "label": "Free"
+          },
+          {
+            "value": "pro",
+            "label": "Pro"
+          },
+          {
+            "value": "team",
+            "label": "Team"
+          }
+        ]
+      }
+    },
+    "badge": {
+      "type": "Badge",
+      "props": {
+        "label": "Pro selected: priority support included",
+        "tone": "success"
+      },
+      "visible": {
+        "$state": "/form/plan",
+        "eq": "pro"
+      }
+    },
+    "actions": {
+      "type": "Stack",
+      "props": {
+        "direction": "horizontal",
+        "gap": "sm"
+      },
+      "children": [
+        "save",
+        "show"
+      ]
+    },
+    "save": {
+      "type": "Button",
+      "props": {
+        "label": "Save",
+        "variant": "secondary"
+      },
+      "on": {
+        "press": {
+          "action": "submit",
+          "params": {
+            "form": {
+              "$state": "/form"
+            }
+          }
+        }
+      }
+    },
+    "saving": {
+      "type": "Text",
+      "props": {
+        "text": "Saving\u2026",
+        "tone": "muted"
+      },
+      "visible": {
+        "$state": "/submitting"
+      }
+    },
+    "error": {
+      "type": "Text",
+      "props": {
+        "text": {
+          "$template": "Couldn't save: ${/submissionError}"
+        },
+        "tone": "danger"
+      },
+      "visible": {
+        "$state": "/submissionError"
+      }
+    },
+    "done": {
+      "type": "Card",
+      "props": {
+        "title": "You're all set",
+        "subtitle": {
+          "$template": "Saved as submission #${/submission/id}"
+        }
+      },
+      "children": [
+        "summary",
+        "edit"
+      ],
+      "visible": {
+        "$state": "/submission"
+      }
+    },
+    "summary": {
+      "type": "Text",
+      "props": {
+        "text": {
+          "$template": "${/form/name} is on the ${/form/plan} plan."
+        }
+      }
+    },
+    "edit": {
+      "type": "Button",
+      "props": {
+        "label": "Edit",
+        "variant": "secondary"
+      },
+      "on": {
+        "press": {
+          "action": "setState",
+          "params": {
+            "statePath": "/submission",
+            "value": null
+          }
+        }
+      }
+    },
+    "show": {
+      "type": "Button",
+      "props": {
+        "label": "Show saved plans"
+      },
+      "on": {
+        "press": {
+          "action": "callTool",
+          "params": {
+            "name": "list_submissions",
+            "arguments": {},
+            "resultPath": "/saved"
+          }
+        }
+      }
+    },
+    "loading": {
+      "type": "Text",
+      "props": {
+        "text": "Loading\u2026",
+        "tone": "muted"
+      },
+      "visible": {
+        "$state": "/calls/list_submissions/status",
+        "eq": "pending"
+      }
+    },
+    "savedCount": {
+      "type": "Text",
+      "props": {
+        "text": {
+          "$template": "You have ${/saved/count} saved plan(s)."
+        },
+        "tone": "muted"
+      },
+      "visible": {
+        "$state": "/saved"
+      }
+    }
+  }
+}
